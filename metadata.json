@@ -1,0 +1,6 @@
+{
+  "name": "The Comedy Button",
+  "description": "The 24/7 live radio broadcast and complete episode archive for The Comedy Button podcast, featuring all 560+ episodes and synchronized live radio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

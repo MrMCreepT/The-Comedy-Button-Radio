@@ -1,0 +1,167 @@
+{
+  "posts": [
+    {
+      "id": "post-1788904618195",
+      "title": "Favorite catchphrase from the show?",
+      "author": "MaxFan",
+      "authorBadge": "Listener",
+      "category": "stories",
+      "content": "Nothing beats the classic BRAP BRAP or when Ryan screams about crazy drivers!",
+      "createdAt": "2026-09-08T21:56:58.195Z",
+      "repliesCount": 1,
+      "reactions": {
+        "brap": 2,
+        "lol": 0,
+        "beer": 0,
+        "fire": 0
+      },
+      "comments": [
+        {
+          "id": "comment-1788904621872",
+          "postId": "post-1788904618195",
+          "author": "ScottFan",
+          "authorBadge": "Member",
+          "content": "100% agreed, classic gold.",
+          "createdAt": "2026-09-08T21:57:01.872Z",
+          "reactions": {
+            "brap": 0,
+            "lol": 0,
+            "beer": 0,
+            "fire": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "post-1",
+      "title": "The Grand Finale reflections: 11.5 years of pure nonsense!",
+      "author": "ButtonVeteran_99",
+      "authorBadge": "OG Listener",
+      "category": "episodes",
+      "content": "Can we talk about Episode 550? Hearing everyone gather one last time with all the significant others dropping by was both hilarious and weirdly emotional. The horse in the living room bit, Ryan's dad sagas, and Scott's fast food adventures defined my 20s. Who else cried when Brian thanked the fans at the end? BRAP BRAP forever!",
+      "episodeRefId": "ep-550",
+      "episodeRefTitle": "The Comedy Button: Episode 550 -- THE GRAND FINALE!",
+      "createdAt": "2024-02-15T18:24:00Z",
+      "repliesCount": 4,
+      "reactions": {
+        "brap": 42,
+        "lol": 19,
+        "beer": 28,
+        "fire": 33
+      },
+      "comments": [
+        {
+          "id": "c-1",
+          "postId": "post-1",
+          "author": "MaxsLizardFan",
+          "authorBadge": "Superfan",
+          "content": "Honestly, the callback to the hobo wine tasting was perfection. Couldn't have asked for a better three-hour sendoff.",
+          "createdAt": "2024-02-15T19:02:00Z",
+          "reactions": {
+            "brap": 14,
+            "lol": 3,
+            "beer": 8,
+            "fire": 5
+          }
+        },
+        {
+          "id": "c-2",
+          "postId": "post-1",
+          "author": "BromleyBurgers",
+          "authorBadge": "Moderator",
+          "content": "Still can't believe they did 550 regular episodes plus the specials. Re-listening to Episode 1 right now and the audio quality difference is wild.",
+          "createdAt": "2024-02-16T08:15:00Z",
+          "reactions": {
+            "brap": 9,
+            "lol": 6,
+            "beer": 12,
+            "fire": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "post-2",
+      "title": "Ranking the Movie Commentaries: Street Fighter vs Home Alone 2 vs The Lost Boys",
+      "author": "CinephileRyan",
+      "authorBadge": "Commentary Club",
+      "category": "episodes",
+      "content": "The exclusive commentary audio tracks are goldmines. Scott losing his mind during Raul Julia's performance in Street Fighter had me gasping for breath on my commute. Which commentary track is everyone's absolute favorite?",
+      "episodeRefId": "commentary-sf",
+      "episodeRefTitle": "The Comedy Button: Street Fighter Commentary",
+      "createdAt": "2024-03-01T14:10:00Z",
+      "repliesCount": 3,
+      "reactions": {
+        "brap": 23,
+        "lol": 15,
+        "beer": 11,
+        "fire": 19
+      },
+      "comments": [
+        {
+          "id": "c-3",
+          "postId": "post-2",
+          "author": "AltanoAppreciator",
+          "authorBadge": "Member",
+          "content": "Home Alone 2 commentary when they start dissecting Kevin McCallister as a psychopathic supervillain is peak podcasting.",
+          "createdAt": "2024-03-01T16:30:00Z",
+          "reactions": {
+            "brap": 8,
+            "lol": 11,
+            "beer": 4,
+            "fire": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "post-3",
+      "title": "Official Gas Station Beverage Taste-Test Thread",
+      "author": "HoboSommelier",
+      "authorBadge": "Mixologist",
+      "category": "hobo-corner",
+      "content": "In tribute to Scott and Ryan testing bizarre budget drinks, I found a 99-cent 'Electric Blue Cotton Candy' soda at a desert 7-Eleven. Tastes like melted blue freeze pops and instant regret. Post your weirdest gas station beverage discoveries here!",
+      "createdAt": "2024-03-10T22:45:00Z",
+      "repliesCount": 2,
+      "reactions": {
+        "brap": 17,
+        "lol": 31,
+        "beer": 25,
+        "fire": 8
+      },
+      "comments": [
+        {
+          "id": "c-4",
+          "postId": "post-3",
+          "author": "KristinFanClub",
+          "authorBadge": "Member",
+          "content": "Reminds me of when they tried four loko recipes on the live show. True gastrointestinal courage.",
+          "createdAt": "2024-03-11T01:10:00Z",
+          "reactions": {
+            "brap": 6,
+            "lol": 14,
+            "beer": 9,
+            "fire": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "post-4",
+      "title": "What is the single most unhinged advice given on the mailbag?",
+      "author": "QuestionMaster",
+      "authorBadge": "Curious Listener",
+      "category": "mailbag",
+      "content": "Looking back across all the years, what advice question reply made you pull your car over from laughing? For me, it's definitely when someone asked how to break up with a roommate and the advice was essentially to pretend to be a foreign exchange student.",
+      "createdAt": "2024-04-05T11:20:00Z",
+      "repliesCount": 1,
+      "reactions": {
+        "brap": 35,
+        "lol": 24,
+        "beer": 10,
+        "fire": 16
+      },
+      "comments": []
+    }
+  ]
+}
