@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Episode } from '../types';
 import { useAudio } from '../context/AudioContext';
 import { formatDate } from '../utils/format';
+import { getArtworkUrl, handleImageError } from '../utils/assets';
 import {
   isAnthonyEpisode,
   isKristinEpisode,
@@ -38,6 +39,17 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
     isFavorite,
   } = useAudio();
 
+  // Handle ESC key to close modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   if (!episode) return null;
 
   const isCurrentPlaying = currentEpisode?.id === episode.id && isPlaying;
@@ -71,50 +83,60 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
     : detectEpisodeGuests(episode);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ duration: 0.2 }}
-        className="bg-[#121520] border border-zinc-700/80 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl text-zinc-100 flex flex-col max-h-[90vh]"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+        className="bg-[#121520] border-t sm:border border-zinc-700/80 rounded-t-3xl sm:rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl text-zinc-100 flex flex-col max-h-[92vh] sm:max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Pull Handle Indicator */}
+        <div className="sm:hidden pt-3 pb-1 flex justify-center bg-[#161a28]">
+          <div className="w-12 h-1.5 bg-zinc-700 rounded-full" />
+        </div>
+
         {/* Header with Artwork & Title */}
-        <div className="p-5 sm:p-6 border-b border-zinc-800 bg-[#161a28] flex items-start justify-between gap-4">
-          <div className="flex gap-4 items-start min-w-0">
+        <div className="p-4 sm:p-6 border-b border-zinc-800 bg-[#161a28] flex items-start justify-between gap-3 sm:gap-4">
+          <div className="flex gap-3.5 sm:gap-4 items-start min-w-0">
             <img
-              src={episode.imageUrl || "/assets/cover.jpg"}
+              src={getArtworkUrl(episode.imageUrl)}
               alt={episode.title}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-zinc-700 shadow-md object-cover shrink-0"
+              className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl border border-zinc-700 shadow-md object-cover shrink-0"
+              onError={handleImageError}
+              referrerPolicy="no-referrer"
             />
-            <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="space-y-1 sm:space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {episode.episodeNumber ? (
-                  <span className="text-xs font-bold bg-red-950/90 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] sm:text-xs font-bold bg-red-950/90 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md">
                     EPISODE #{episode.episodeNumber}
                   </span>
                 ) : (
-                  <span className="text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] sm:text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md">
                     SPECIAL
                   </span>
                 )}
-                <span className="text-xs text-zinc-400 font-medium">
+                <span className="text-[11px] sm:text-xs text-zinc-400 font-medium">
                   {eraLabel}
                 </span>
               </div>
 
-              <h2 className="text-base sm:text-xl font-bold text-zinc-100 leading-snug line-clamp-2">
+              <h2 className="text-sm sm:text-lg font-bold text-zinc-100 leading-snug line-clamp-2">
                 {episode.title}
               </h2>
 
               {guests.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="text-[11px] font-semibold text-zinc-400">Guests:</span>
+                <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-400">Guests:</span>
                   {guests.map((g) => (
                     <span
                       key={g}
-                      className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700"
+                      className="text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700"
                     >
                       {g}
                     </span>
@@ -124,16 +146,18 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
             </div>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={onClose}
-            className="p-2 rounded-xl bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors shrink-0 cursor-pointer"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
-          </button>
+          </motion.button>
         </div>
 
         {/* Metadata row */}
-        <div className="px-5 sm:px-6 py-3 bg-[#0e111a] border-b border-zinc-800 flex flex-wrap items-center gap-4 text-xs font-medium text-zinc-400">
+        <div className="px-4 sm:px-6 py-2.5 bg-[#0e111a] border-b border-zinc-800 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium text-zinc-400">
           <span className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-zinc-500" />
             {formatDate(episode.pubDate)}
@@ -142,16 +166,17 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
             <Clock className="w-3.5 h-3.5 text-zinc-500" />
             {episode.duration}
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="hidden sm:flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-zinc-500" />
             <span className="truncate max-w-xs">{eraHosts}</span>
           </span>
         </div>
 
         {/* Action button bar */}
-        <div className="px-5 sm:px-6 py-3.5 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-[#141824]">
+        <div className="px-4 sm:px-6 py-3 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 bg-[#141824]">
           <div className="flex items-center gap-2 flex-wrap">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.94 }}
               onClick={() => {
                 if (currentEpisode?.id === episode.id) {
                   togglePlay();
@@ -159,7 +184,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
                   playEpisode(episode);
                 }
               }}
-              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-md shadow-red-950/50 cursor-pointer"
+              className="min-h-[42px] px-4 sm:px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-md shadow-red-950/50 cursor-pointer"
             >
               {isCurrentPlaying ? (
                 <>
@@ -172,11 +197,12 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
                   <span>Play Episode</span>
                 </>
               )}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.94 }}
               onClick={() => toggleListened(episode.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+              className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
                 listened
                   ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
                   : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800'
@@ -184,11 +210,14 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
             >
               <Check className="w-3.5 h-3.5 text-red-400" />
               <span>{listened ? 'Listened' : 'Mark Listened'}</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              animate={{ scale: favorited ? [1, 1.3, 1] : 1 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
               onClick={() => toggleFavorite(episode.id)}
-              className={`p-2 rounded-xl border transition-colors cursor-pointer ${
+              className={`min-h-[42px] min-w-[42px] p-2.5 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
                 favorited
                   ? 'bg-red-950/80 border-red-800 text-red-400'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
@@ -196,7 +225,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
               title="Favorite"
             >
               <Heart className={`w-4 h-4 ${favorited ? 'fill-current' : ''}`} />
-            </button>
+            </motion.button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -205,7 +234,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
               target="_blank"
               rel="noreferrer"
               download
-              className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="min-h-[42px] min-w-[42px] p-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors flex items-center justify-center"
               title="Download MP3"
             >
               <Download className="w-4 h-4" />
@@ -214,12 +243,12 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
         </div>
 
         {/* Show notes body */}
-        <div className="p-5 sm:p-6 max-h-[50vh] overflow-y-auto space-y-4">
+        <div className="p-4 sm:p-6 max-h-[48vh] overflow-y-auto space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
             Show Notes & Overview
           </h3>
           <div
-            className="text-zinc-300 text-sm leading-relaxed space-y-3 prose prose-invert prose-p:my-2 prose-a:text-red-400"
+            className="text-zinc-300 text-xs sm:text-sm leading-relaxed space-y-3 prose prose-invert prose-p:my-2 prose-a:text-red-400"
             dangerouslySetInnerHTML={{ __html: episode.descriptionHtml || `<p>${episode.description}</p>` }}
           />
 

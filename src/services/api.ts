@@ -4,6 +4,7 @@ import {
   LiveTimelineStatus
 } from '../types';
 import { computeClientStreamTimeline } from '../utils/timelineScheduler';
+import { episodeMatchesTopic } from '../utils/showNotesFilter';
 
 let cachedEpisodesInMemory: Episode[] = [];
 let cachedMetaInMemory: PodcastMeta | null = null;
@@ -41,7 +42,13 @@ export async function getPodcastInfo(): Promise<PodcastMeta> {
   return staticData;
 }
 
-export async function getEpisodes(search?: string, filter?: string): Promise<{ total: number; episodes: Episode[] }> {
+export async function getEpisodes(
+  search?: string,
+  filter?: string,
+  searchScope?: 'all' | 'notes' | 'title',
+  topic?: string,
+  guest?: string
+): Promise<{ total: number; episodes: Episode[] }> {
   let list: Episode[] = [];
 
   // 1. Try server API endpoint
@@ -49,6 +56,9 @@ export async function getEpisodes(search?: string, filter?: string): Promise<{ t
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (filter) params.set('filter', filter);
+    if (searchScope) params.set('searchScope', searchScope);
+    if (topic) params.set('topic', topic);
+    if (guest) params.set('guest', guest);
 
     const res = await fetch(`/api/podcast/episodes?${params.toString()}`);
     if (res.ok) {
@@ -76,12 +86,31 @@ export async function getEpisodes(search?: string, filter?: string): Promise<{ t
     list = list.filter((e) => !e.isBonus && Boolean(e.episodeNumber));
   }
 
+  // Show notes topic and guest filtering for client/static mode
+  if (topic && topic !== 'all') {
+    list = list.filter((e) => episodeMatchesTopic(e, topic, guest));
+  } else if (guest && guest !== 'all') {
+    list = list.filter((e) => {
+      const guests = e.detectedGuests || [];
+      if (guests.includes(guest)) return true;
+      return (e.description || '').toLowerCase().includes(guest.toLowerCase());
+    });
+  }
+
   if (typeof search === 'string' && search.trim()) {
     const q = search.toLowerCase().trim();
-    list = list.filter((e) =>
-      e.title.toLowerCase().includes(q) ||
-      e.description.toLowerCase().includes(q)
-    );
+    list = list.filter((e) => {
+      const titleMatch = e.title.toLowerCase().includes(q) || (e.episodeNumber && e.episodeNumber.toString() === q);
+      const notesMatch = (e.description || '').toLowerCase().includes(q);
+
+      if (searchScope === 'notes') {
+        return notesMatch;
+      }
+      if (searchScope === 'title') {
+        return titleMatch;
+      }
+      return titleMatch || notesMatch;
+    });
   }
 
   return {

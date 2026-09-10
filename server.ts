@@ -7,6 +7,7 @@ import { spawn } from "child_process";
 import { XMLParser } from "fast-xml-parser";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { episodeMatchesTopic } from "./src/utils/showNotesFilter";
 
 const app = express();
 const PORT = 3000;
@@ -397,7 +398,7 @@ app.get("/api/podcast/info", async (req, res) => {
 app.get("/api/podcast/episodes", async (req, res) => {
   try {
     const feed = await fetchComedyButtonFeed();
-    const { search, filter } = req.query;
+    const { search, filter, searchScope, topic, guest } = req.query;
     let list = feed.episodes;
 
     if (filter === "bonus") {
@@ -406,12 +407,34 @@ app.get("/api/podcast/episodes", async (req, res) => {
       list = list.filter((e: any) => !e.isBonus && e.episodeNumber);
     }
 
+    // Show notes topic and guest filtering
+    if (typeof topic === "string" && topic && topic !== "all") {
+      list = list.filter((e: any) =>
+        episodeMatchesTopic(e, topic, typeof guest === "string" ? guest : undefined)
+      );
+    } else if (typeof guest === "string" && guest && guest !== "all") {
+      list = list.filter((e: any) => {
+        const guests = e.detectedGuests || [];
+        if (guests.includes(guest)) return true;
+        return (e.description || "").toLowerCase().includes(guest.toLowerCase());
+      });
+    }
+
     if (typeof search === "string" && search.trim()) {
       const q = search.toLowerCase().trim();
-      list = list.filter((e: any) =>
-        e.title.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q)
-      );
+      const scope = typeof searchScope === "string" ? searchScope : "all";
+      list = list.filter((e: any) => {
+        const titleMatch = e.title.toLowerCase().includes(q) || (e.episodeNumber && e.episodeNumber.toString() === q);
+        const notesMatch = (e.description || "").toLowerCase().includes(q);
+
+        if (scope === "notes") {
+          return notesMatch;
+        }
+        if (scope === "title") {
+          return titleMatch;
+        }
+        return titleMatch || notesMatch;
+      });
     }
 
     res.json({

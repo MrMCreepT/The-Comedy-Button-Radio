@@ -4,6 +4,7 @@ import { Episode, LiveTimelineStatus } from '../types';
 import { useAudio } from '../context/AudioContext';
 import { getStreamTimeline } from '../services/api';
 import { formatSeconds } from '../utils/format';
+import { getArtworkUrl, handleImageError } from '../utils/assets';
 import {
   Radio,
   Play,
@@ -214,9 +215,11 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
           {/* Cover Art with Live Equalizer */}
           <div className="relative shrink-0 w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/80 group">
             <img
-              src={onAirEpisode?.imageUrl || "/assets/cover.jpg"}
+              src={getArtworkUrl(onAirEpisode?.imageUrl)}
               alt="On Air Now"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={handleImageError}
+              referrerPolicy="no-referrer"
             />
 
             {/* Dark gradient vignette */}
@@ -281,13 +284,13 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
             </div>
 
             {/* Tune In Live Call To Action Button */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 pt-2">
               <motion.button
                 whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleTuneInLive}
                 disabled={!onAirEpisode}
-                className="px-6 py-3.5 rounded-2xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-sm sm:text-base flex items-center gap-2.5 shadow-xl shadow-red-950/60 transition-colors cursor-pointer"
+                className="w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-2xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-red-950/60 transition-colors cursor-pointer"
               >
                 {isPlayingCurrentBroadcast ? (
                   <>
@@ -303,27 +306,28 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
               </motion.button>
 
               {currentEpisode?.id === onAirEpisode?.id && Math.abs(currentTime - liveOffsetSeconds) > 10 && (
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleResyncToExactLive}
-                  className="px-4 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                  className="min-h-[44px] px-4 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   title="Jump to current live second"
                 >
                   <Clock className="w-4 h-4 text-red-400" />
                   <span>Sync to Live ({Math.round(Math.abs(currentTime - liveOffsetSeconds))}s behind)</span>
-                </button>
+                </motion.button>
               )}
 
               {/* Sleep Timer */}
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:ml-auto pt-1 sm:pt-0">
                 <Moon className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-xs text-zinc-400 font-medium hidden sm:inline">Sleep Timer:</span>
+                <span className="text-xs text-zinc-400 font-medium">Sleep Timer:</span>
                 <select
                   value={sleepTimerMinutes === null ? 'off' : sleepTimerMinutes.toString()}
                   onChange={e => {
                     const v = e.target.value;
                     setSleepTimerMinutes(v === 'off' ? null : Number(v));
                   }}
-                  className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-700/80 rounded-xl text-xs text-zinc-300 focus:outline-none focus:border-red-500 cursor-pointer"
+                  className="min-h-[38px] px-2.5 py-1.5 bg-zinc-900 border border-zinc-700/80 rounded-xl text-xs text-zinc-300 focus:outline-none focus:border-red-500 cursor-pointer"
                 >
                   <option value="off">Off</option>
                   <option value="15">15 min</option>
