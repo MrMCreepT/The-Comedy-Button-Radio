@@ -168,32 +168,32 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
       : 0;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-5 sm:space-y-6">
       {/* 24/7 Live Broadcast Hero Section */}
-      <div className="bg-[#121520] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div className="bg-[#121520] border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl relative overflow-hidden">
         {/* Subtle crimson ambient glow */}
         <div className="absolute -right-16 -top-16 w-96 h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Station Status Banner */}
-        <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-800/80">
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex items-center justify-center">
-              <span className="w-3 h-3 rounded-full bg-red-600" />
-              <span className="absolute w-4 h-4 rounded-full bg-red-500/60 animate-ping" />
+        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-zinc-800/80">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="relative flex items-center justify-center shrink-0">
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-600" />
+              <span className="absolute w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-red-500/60 animate-ping" />
             </div>
-            <span className="text-xs font-black uppercase tracking-wider text-red-500">
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-red-500 shrink-0">
               Live Broadcast
             </span>
-            <span className="text-zinc-600">•</span>
-            <span className="text-xs text-zinc-400 font-medium">
+            <span className="text-zinc-600 hidden xs:inline">•</span>
+            <span className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate hidden xs:inline">
               Synchronized 24/7 Global Stream
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleShareStation}
-              className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs text-zinc-300 font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs text-zinc-300 font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Copy Radio Link"
             >
               {copiedLink ? (
@@ -212,9 +212,9 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
         </div>
 
         {/* On-Air Program Featured Layout */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 sm:gap-6 lg:gap-8">
           {/* Cover Art with Live Equalizer */}
-          <div className="relative shrink-0 w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/80 group">
+          <div className="relative shrink-0 w-36 h-36 xs:w-44 xs:h-44 sm:w-52 sm:h-52 lg:w-56 lg:h-56 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/80 group mx-auto lg:mx-0">
             <img
               src={getArtworkUrl(onAirEpisode?.imageUrl)}
               alt="On Air Now"
@@ -228,25 +228,25 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
 
             {/* Live Equalizer indicator */}
             {isPlayingCurrentBroadcast && (
-              <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-zinc-700/60">
-                <span className="w-1 bg-red-500 rounded-full h-4 eq-bar-1" />
-                <span className="w-1 bg-red-500 rounded-full h-4 eq-bar-2" />
-                <span className="w-1 bg-red-500 rounded-full h-4 eq-bar-3" />
-                <span className="w-1 bg-red-500 rounded-full h-4 eq-bar-4" />
-                <span className="text-[11px] font-bold text-red-400 ml-1">LIVE</span>
+              <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-black/60 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center gap-1 border border-zinc-700/60">
+                <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-1" />
+                <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-2" />
+                <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-3" />
+                <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-4" />
+                <span className="text-[10px] sm:text-[11px] font-bold text-red-400 ml-1">LIVE</span>
               </div>
             )}
 
             {/* Episode Number pill */}
             {onAirEpisode?.episodeNumber && (
-              <span className="absolute bottom-3 left-3 text-xs font-bold text-white bg-red-600/90 px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-md">
+              <span className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 text-[11px] sm:text-xs font-bold text-white bg-red-600/90 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg backdrop-blur-sm shadow-md">
                 EP {onAirEpisode.episodeNumber}
               </span>
             )}
           </div>
 
           {/* Broadcast Metadata & Controls */}
-          <div className="flex-1 w-full text-center lg:text-left space-y-4">
+          <div className="flex-1 w-full text-center lg:text-left space-y-3 sm:space-y-4">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 mb-1">
                 <Radio className="w-3.5 h-3.5 text-red-500" />
@@ -255,19 +255,19 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
 
               <h2
                 onClick={() => onAirEpisode && onOpenEpisode?.(onAirEpisode)}
-                className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-100 leading-tight hover:text-red-400 transition-colors cursor-pointer"
+                className="text-lg sm:text-2xl lg:text-3xl font-bold text-zinc-100 leading-tight hover:text-red-400 transition-colors cursor-pointer"
               >
                 {onAirEpisode?.title || 'Connecting to live broadcast...'}
               </h2>
 
-              <p className="text-sm text-zinc-400 mt-2 line-clamp-2 max-w-2xl">
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 sm:mt-2 line-clamp-2 max-w-2xl mx-auto lg:mx-0">
                 {onAirEpisode?.description?.replace(/<[^>]*>?/gm, '') ||
                   'Streaming from the shuffled 560+ episode master catalog.'}
               </p>
             </div>
 
             {/* Live Progress Bar */}
-            <div className="space-y-1.5 max-w-2xl">
+            <div className="space-y-1.5 max-w-2xl mx-auto lg:mx-0">
               <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-red-600 rounded-full transition-all duration-1000"
@@ -275,12 +275,13 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>{formatSeconds(liveOffsetSeconds)} elapsed</span>
-                <span className="text-zinc-500">
-                  {formatSeconds(liveRemainingSeconds)} remaining in show
+              <div className="flex items-center justify-between text-[11px] sm:text-xs font-mono text-zinc-400 gap-1 select-none">
+                <span className="shrink-0">{formatSeconds(liveOffsetSeconds)} elapsed</span>
+                <span className="text-zinc-500 truncate text-center px-1">
+                  <span className="hidden sm:inline">{formatSeconds(liveRemainingSeconds)} remaining in show</span>
+                  <span className="sm:hidden">{formatSeconds(liveRemainingSeconds)} left</span>
                 </span>
-                <span>{formatSeconds(timeline?.onAir?.durationSeconds || 0)}</span>
+                <span className="shrink-0">{formatSeconds(timeline?.onAir?.durationSeconds || 0)}</span>
               </div>
             </div>
 

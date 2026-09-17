@@ -13,7 +13,7 @@ import { Footer } from './components/Footer';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 function AppContent() {
-  const { playEpisode } = useAudio();
+  const { playEpisode, currentEpisode } = useAudio();
   const [activeTab, setActiveTab] = useState<'stream' | 'archive'>('stream');
   const [meta, setMeta] = useState<PodcastMeta | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -53,7 +53,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0e14] text-zinc-100 flex flex-col selection:bg-red-600 selection:text-white font-sans antialiased relative">
+    <div className="min-h-screen bg-[#0c0e14] text-zinc-100 flex flex-col selection:bg-red-600 selection:text-white font-sans antialiased relative overflow-x-hidden w-full max-w-full">
       {/* Top Brand Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -63,7 +63,9 @@ function AppContent() {
       />
 
       {/* Main Content View (24/7 Radio or Episode Archive) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28">
+      <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 ${
+        currentEpisode ? 'pb-24 sm:pb-28' : 'pb-8 sm:pb-12'
+      }`}>
         {error ? (
           <div className="my-12 p-8 max-w-lg mx-auto rounded-3xl bg-[#121520] border border-zinc-800 text-center space-y-4 shadow-xl">
             <div className="w-14 h-14 rounded-2xl bg-red-950/60 text-red-400 border border-red-800/40 flex items-center justify-center mx-auto shadow-md">

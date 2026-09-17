@@ -69,19 +69,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [linksOpen]);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0e111a]/95 backdrop-blur-xl border-b border-zinc-800/80 text-zinc-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-18 gap-3 sm:gap-4">
+    <header className="sticky top-0 z-40 bg-[#0e111a]/95 backdrop-blur-xl border-b border-zinc-800/80 text-zinc-100 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-18 gap-2 sm:gap-4">
           {/* Logo & Brand Identity */}
           <div
-            className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none shrink-0"
             onClick={() => setActiveTab('stream')}
           >
-            <ComedyButtonLogo size="md" />
+            <ComedyButtonLogo size="sm" className="sm:hidden" />
+            <ComedyButtonLogo size="md" className="hidden sm:flex" />
           </div>
 
-          {/* Clean Segmented Navigation (Radio & Episodes) */}
-          <nav className="flex items-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative shrink-0">
+          {/* Clean Segmented Navigation (Radio & Episodes) - Desktop view */}
+          <nav className="hidden sm:flex items-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative shrink-0">
             <button
               onClick={() => setActiveTab('stream')}
               className={`relative min-h-[40px] px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer z-10 ${
@@ -130,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Action: T-Shirts, Links Dropdown, PWA, Shuffle */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Direct T-Shirts Store Link */}
             <motion.a
               whileHover={{ scale: 1.03 }}
@@ -151,7 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setLinksOpen(!linksOpen)}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[40px] rounded-xl border text-xs font-semibold shadow-sm transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl border text-xs font-semibold shadow-sm transition-colors cursor-pointer ${
                   linksOpen
                     ? 'bg-zinc-800 border-zinc-600 text-white'
                     : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 hover:text-white'
@@ -251,7 +252,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   whileTap={{ scale: 0.85, rotate: 180 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   onClick={onPlayTrueRandom}
-                  className="sm:hidden flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-zinc-900 border border-zinc-700/80 text-red-400 active:text-white cursor-pointer shadow-sm"
+                  className="sm:hidden flex items-center justify-center w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl bg-zinc-900 border border-zinc-700/80 text-red-400 active:text-white cursor-pointer shadow-sm"
                   title="Play a random episode"
                   aria-label="Play random episode"
                 >
@@ -260,6 +261,57 @@ export const Navbar: React.FC<NavbarProps> = ({
               </>
             )}
           </div>
+        </div>
+
+        {/* Mobile Segmented Navigation (underneath top bar, full width, zero overflow) */}
+        <div className="sm:hidden pb-2.5 pt-0.5">
+          <nav className="grid grid-cols-2 p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative w-full">
+            <button
+              onClick={() => setActiveTab('stream')}
+              className={`relative min-h-[38px] py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer z-10 ${
+                activeTab === 'stream' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              {activeTab === 'stream' && (
+                <motion.div
+                  layoutId="navbarActiveIndicatorMobile"
+                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                />
+              )}
+              <div className="relative z-10 flex items-center justify-center">
+                <Radio className="w-3.5 h-3.5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-300 animate-ping" />
+              </div>
+              <span className="relative z-10">24/7 Radio</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('archive')}
+              className={`relative min-h-[38px] py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer z-10 ${
+                activeTab === 'archive' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              {activeTab === 'archive' && (
+                <motion.div
+                  layoutId="navbarActiveIndicatorMobile"
+                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                />
+              )}
+              <Library className="w-3.5 h-3.5 relative z-10" />
+              <span className="relative z-10">Episodes</span>
+              <span
+                className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
+                  activeTab === 'archive'
+                    ? 'bg-red-700/80 text-white'
+                    : 'bg-zinc-800 text-zinc-400'
+                }`}
+              >
+                {totalEpisodes || '560+'}
+              </span>
+            </button>
+          </nav>
         </div>
       </div>
     </header>
