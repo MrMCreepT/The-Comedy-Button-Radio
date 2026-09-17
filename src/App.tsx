@@ -8,6 +8,8 @@ import { EpisodeArchive } from './components/EpisodeArchive';
 import { AudioPlayer } from './components/AudioPlayer';
 import { EpisodeModal } from './components/EpisodeModal';
 import { RadioStreamStation } from './components/RadioStreamStation';
+import { PWABanner } from './components/PWABanner';
+import { Footer } from './components/Footer';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 function AppContent() {
@@ -98,6 +100,9 @@ function AppContent() {
         )}
       </main>
 
+      {/* Official Links & Brand Footer */}
+      <Footer />
+
       {/* Persistent Bottom Audio Player Bar */}
       <AudioPlayer onOpenEpisode={(ep) => setSelectedEpisode(ep)} />
 
@@ -106,6 +111,9 @@ function AppContent() {
         episode={selectedEpisode}
         onClose={() => setSelectedEpisode(null)}
       />
+
+      {/* Ambient Mobile PWA Install Banner */}
+      <PWABanner />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useAudio } from '../context/AudioContext';
 import { getStreamTimeline } from '../services/api';
 import { formatSeconds } from '../utils/format';
 import { getArtworkUrl, handleImageError } from '../utils/assets';
+import { OfficialLinksBar } from './OfficialLinksBar';
 import {
   Radio,
   Play,
@@ -464,6 +465,17 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
         <p className="leading-relaxed">
           <strong className="text-zinc-200">How the 24/7 Live Radio works:</strong> Every listener around the world hears the exact same show at the exact same time. The master schedule shuffles all 560+ episodes across 12+ years of comedy, broadcasting non-stop 24 hours a day, 7 days a week. For listening in chronological order or specific searches, switch to the <span className="text-red-400 font-semibold">Episodes</span> tab.
         </p>
+      </div>
+
+      {/* Official Community Channels, Store & Support Cards */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            Official Channels & T-Shirts
+          </h3>
+          <span className="text-[11px] text-zinc-500">Official Comedy Button Links</span>
+        </div>
+        <OfficialLinksBar variant="cards" />
       </div>
     </div>
   );

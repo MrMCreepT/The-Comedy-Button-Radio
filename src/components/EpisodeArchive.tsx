@@ -11,6 +11,7 @@ import {
   getEpisodeDetectedTopics,
   extractShowNotesSnippet
 } from '../utils/showNotesFilter';
+import { OfficialLinksBar } from './OfficialLinksBar';
 import {
   Search,
   Play,
@@ -304,6 +305,11 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
                   <span>Shuffle Archive</span>
                 </button>
               )}
+            </div>
+
+            {/* Official Channels, Store & Community Links */}
+            <div className="pt-2 border-t border-zinc-800/80">
+              <OfficialLinksBar variant="pills" />
             </div>
           </div>
         </div>
