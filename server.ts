@@ -14,6 +14,22 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Helper for atomic file persistence to prevent file corruption and race conditions
+function writeJsonAtomic(filePath: string, data: any) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const tempPath = `${filePath}.tmp.${Date.now()}.${Math.random().toString(36).slice(2)}`;
+    const jsonContent = JSON.stringify(data, null, 2);
+    fs.writeFileSync(tempPath, jsonContent, "utf-8");
+    fs.renameSync(tempPath, filePath);
+  } catch (err) {
+    console.error(`Error atomically writing file ${filePath}:`, err);
+  }
+}
+
 // Lazy-initialized Gemini client
 let geminiClient: GoogleGenAI | null = null;
 function getGemini(): GoogleGenAI {
@@ -200,11 +216,7 @@ function loadForumData(): { posts: any[] } {
 }
 
 function saveForumData(data: { posts: any[] }) {
-  try {
-    fs.writeFileSync(FORUM_FILE, JSON.stringify(data, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Error writing forum file:", err);
-  }
+  writeJsonAtomic(FORUM_FILE, data);
 }
 
 // Fetch and parse the live Libsyn RSS feed

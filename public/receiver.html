@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Comedy Button — Cast Receiver</title>
+  <!-- Google Cast Application Framework (CAF) Receiver SDK -->
+  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v1/cast_receiver_framework.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #07090e;
+      color: #f4f4f5;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    
+    /* Dynamic Ambient Glow Backdrop */
+    #ambient-bg {
+      position: absolute;
+      inset: -10%;
+      width: 120%;
+      height: 120%;
+      background-size: cover;
+      background-position: center;
+      filter: blur(80px) brightness(0.35) saturate(1.8);
+      transform: scale(1.1);
+      transition: background-image 1.2s ease-in-out;
+      z-index: 1;
+    }
+
+    #vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 60% 50%, rgba(7, 9, 14, 0.4) 0%, rgba(7, 9, 14, 0.95) 100%);
+      z-index: 2;
+    }
+
+    /* Main 10-Foot UI Grid */
+    #app-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5vh 6vw;
+    }
+
+    /* Top Brand Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      background: #dc2626;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(220, 38, 38, 0.5);
+    }
+    .brand-logo svg {
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 40%, #fca5a5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(220, 38, 38, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #f87171;
+      text-transform: uppercase;
+    }
+    .live-pulse {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Center Stage: Vinyl & Artwork + Show Details */
+    .center-stage {
+      display: flex;
+      align-items: center;
+      gap: 8vw;
+      margin: auto 0;
+    }
+
+    /* Vinyl Disc & Album Jacket Assembly */
+    .media-assembly {
+      position: relative;
+      width: 32vw;
+      max-width: 440px;
+      aspect-ratio: 1;
+      flex-shrink: 0;
+    }
+
+    /* Album Jacket Cover */
+    .album-cover {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(220, 38, 38, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: #18181b;
+    }
+    .album-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Ambient Spinning Vinyl Disc */
+    .vinyl-disc {
+      position: absolute;
+      top: 2%;
+      left: 15%;
+      width: 96%;
+      height: 96%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #27272a 0%, #09090b 45%, #18181b 50%, #09090b 65%, #27272a 70%, #09090b 100%);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.1);
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* When playing, the vinyl smoothly slides out halfway to the right */
+    .vinyl-disc.playing {
+      left: 45%;
+      animation: spin 18s linear infinite;
+    }
+    .vinyl-label {
+      width: 34%;
+      height: 34%;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid #dc2626;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+    }
+    .vinyl-label img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .vinyl-center-spindle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #000;
+      border-radius: 50%;
+      border: 2px solid #52525b;
+      z-index: 6;
+    }
+
+    /* Show Information Column */
+    .info-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 50vw;
+    }
+    .episode-tag {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #ef4444;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .episode-title {
+      font-size: clamp(28px, 3.8vw, 54px);
+      font-weight: 900;
+      line-height: 1.15;
+      color: #ffffff;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.7);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hosts-line {
+      font-size: 18px;
+      font-weight: 600;
+      color: #d4d4d8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hosts-pill {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f4f4f5;
+    }
+    .show-notes {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #a1a1aa;
+      max-height: 16vh;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      background: rgba(18, 21, 32, 0.6);
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-blur: 10px;
+    }
+
+    /* Bottom Control & Progress Bar */
+    footer {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #dc2626, #ef4444);
+      border-radius: 9999px;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+      transition: width 0.3s ease;
+    }
+    .time-indicators {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: #a1a1aa;
+    }
+
+    /* Animations */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Backdrop -->
+  <div id="ambient-bg"></div>
+  <div id="vignette"></div>
+
+  <!-- Main Container -->
+  <div id="app-container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        </div>
+        <div class="brand-title">The Comedy Button</div>
+      </div>
+      <div class="live-badge" id="broadcast-badge">
+        <span class="live-pulse"></span>
+        <span id="badge-label">Cast Receiver</span>
+      </div>
+    </header>
+
+    <!-- Center Stage -->
+    <main class="center-stage">
+      <div class="media-assembly">
+        <!-- Spinning Vinyl Disc -->
+        <div class="vinyl-disc playing" id="vinyl-disc">
+          <div class="vinyl-label">
+            <img id="vinyl-art" src="/assets/comedy-button-default.jpg" alt="Vinyl Art">
+          </div>
+          <div class="vinyl-center-spindle"></div>
+        </div>
+
+        <!-- Album Jacket Cover -->
+        <div class="album-cover">
+          <img id="album-art" src="/assets/comedy-button-default.jpg" alt="Album Cover">
+        </div>
+      </div>
+
+      <!-- Information Column -->
+      <div class="info-column">
+        <div class="episode-tag" id="episode-tag">Official Broadcast</div>
+        <h1 class="episode-title" id="episode-title">The Comedy Button</h1>
+        <div class="hosts-line">
+          <span class="hosts-pill">Hosts</span>
+          <span id="hosts-text">Brian Altano • Scott Bromley • Ryan Scott • Max Scoville</span>
+        </div>
+        <div class="show-notes" id="show-notes">
+          Tune in to the world's most irreverent podcast with five grown men and women yelling about video games, absurd life stories, and comedy anarchy.
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer Progress -->
+    <footer>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-bar"></div>
+      </div>
+      <div class="time-indicators">
+        <span id="current-time">00:00</span>
+        <span id="duration-time">--:--</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Cast Media Element CAF Hook -->
+  <cast-media-player style="display: none;"></cast-media-player>
+
+  <script>
+    function formatTime(seconds) {
+      if (!seconds || isNaN(seconds) || seconds < 0) return '00:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      const hrs = Math.floor(mins / 60);
+      if (hrs > 0) {
+        return hrs + ':' + String(mins % 60).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+      return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    window.onload = function() {
+      try {
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
+
+        const albumArt = document.getElementById('album-art');
+        const vinylArt = document.getElementById('vinyl-art');
+        const ambientBg = document.getElementById('ambient-bg');
+        const episodeTitle = document.getElementById('episode-title');
+        const episodeTag = document.getElementById('episode-tag');
+        const showNotes = document.getElementById('show-notes');
+        const hostsText = document.getElementById('hosts-text');
+        const vinylDisc = document.getElementById('vinyl-disc');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationTimeEl = document.getElementById('duration-time');
+
+        // On Media Load
+        playerManager.addEventListener(
+          cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
+          () => {
+            const media = playerManager.getMediaInformation();
+            if (!media || !media.metadata) return;
+
+            const metadata = media.metadata;
+            if (metadata.title) {
+              episodeTitle.innerText = metadata.title;
+            }
+            if (metadata.subtitle) {
+              hostsText.innerText = metadata.subtitle;
+            }
+            if (metadata.images && metadata.images[0]?.url) {
+              const url = metadata.images[0].url;
+              albumArt.src = url;
+              vinylArt.src = url;
+              ambientBg.style.backgroundImage = 'url(' + url + ')';
+            }
+            if (metadata.description) {
+              showNotes.innerText = metadata.description;
+            }
+          }
+        );
+
+        // On Time Update
+        playerManager.addEventListener(
+          cast.framework.events.EventType.TIME_UPDATE,
+          () => {
+            const current = playerManager.getCurrentTimeSec();
+            const duration = playerManager.getDurationSec();
+            currentTimeEl.innerText = formatTime(current);
+            durationTimeEl.innerText = formatTime(duration);
+
+            if (duration > 0) {
+              const pct = (current / duration) * 100;
+              progressBar.style.width = Math.min(100, pct) + '%';
+            }
+          }
+        );
+
+        // On Play / Pause State Change
+        playerManager.addEventListener(
+          cast.framework.events.EventType.PLAYER_STATE_CHANGED,
+          (event) => {
+            if (event.state === cast.framework.messages.PlayerState.PLAYING) {
+              vinylDisc.classList.add('playing');
+            } else {
+              vinylDisc.classList.remove('playing');
+            }
+          }
+        );
+
+        context.start();
+      } catch (e) {
+        console.warn('Cast receiver framework initialized outside Cast device environment:', e);
+      }
+    };
+  </script>
+</body>
+</html>

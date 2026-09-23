@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Episode } from '../types';
 import { useAudio } from '../context/AudioContext';
 import { formatDate } from '../utils/format';
 import { getArtworkUrl, handleImageError } from '../utils/assets';
+import { downloadEpisodeForOffline } from '../utils/offlineStorage';
 import {
   isAnthonyEpisode,
   isKristinEpisode,
@@ -19,8 +20,12 @@ import {
   ExternalLink,
   Users,
   Calendar,
-  Clock
+  Clock,
+  CheckCircle2,
+  HardDriveDownload,
+  Loader2
 } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface EpisodeModalProps {
   episode: Episode | null;
@@ -37,24 +42,46 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
     toggleFavorite,
     isListened,
     isFavorite,
+    isOfflineSaved,
+    refreshOfflineIds,
+    removeOfflineEpisode,
   } = useAudio();
 
-  // Handle ESC key to close modal
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+
+  const modalRef = useModalA11y<HTMLDivElement>({
+    isOpen: Boolean(episode),
+    onClose,
+  });
 
   if (!episode) return null;
 
   const isCurrentPlaying = currentEpisode?.id === episode.id && isPlaying;
   const listened = isListened(episode.id);
   const favorited = isFavorite(episode.id);
+  const isOffline = isOfflineSaved(episode.id);
+
+  const handleToggleOffline = async () => {
+    if (isDownloading) return;
+    if (isOffline) {
+      await removeOfflineEpisode(episode.id);
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      setDownloadProgress(0);
+      await downloadEpisodeForOffline(episode, (pct) => {
+        setDownloadProgress(pct);
+      });
+      await refreshOfflineIds();
+    } catch (e) {
+      console.warn('Failed to cache episode:', e);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const isAnthony = isAnthonyEpisode(episode);
   const isKristin = isKristinEpisode(episode);
@@ -84,10 +111,14 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="episode-modal-title"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
@@ -126,7 +157,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
                 </span>
               </div>
 
-              <h2 className="text-sm sm:text-lg font-bold text-zinc-100 leading-snug line-clamp-2">
+              <h2 id="episode-modal-title" className="text-sm sm:text-lg font-bold text-zinc-100 leading-snug line-clamp-2">
                 {episode.title}
               </h2>
 
@@ -149,7 +180,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
-            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-zinc-800/80 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -157,17 +188,17 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
         </div>
 
         {/* Metadata row */}
-        <div className="px-4 sm:px-6 py-2.5 bg-[#0e111a] border-b border-zinc-800 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium text-zinc-400">
+        <div className="px-4 sm:px-6 py-2.5 bg-[#0e111a] border-b border-zinc-800 flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium text-zinc-300">
           <span className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
             {formatDate(episode.pubDate)}
           </span>
           <span className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-zinc-500" />
+            <Clock className="w-3.5 h-3.5 text-zinc-400" />
             {episode.duration}
           </span>
           <span className="hidden sm:flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-zinc-500" />
+            <Users className="w-3.5 h-3.5 text-zinc-400" />
             <span className="truncate max-w-xs">{eraHosts}</span>
           </span>
         </div>
@@ -184,7 +215,7 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
                   playEpisode(episode);
                 }
               }}
-              className="min-h-[42px] px-4 sm:px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-md shadow-red-950/50 cursor-pointer"
+              className="min-h-[48px] px-5 sm:px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-md shadow-red-950/50 cursor-pointer"
             >
               {isCurrentPlaying ? (
                 <>
@@ -202,13 +233,13 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => toggleListened(episode.id)}
-              className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+              className={`min-h-[48px] px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
                 listened
-                  ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
-                  : 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800'
+                  ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                  : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-700/80 hover:text-white'
               }`}
             >
-              <Check className="w-3.5 h-3.5 text-red-400" />
+              <Check className="w-4 h-4 text-red-400" />
               <span>{listened ? 'Listened' : 'Mark Listened'}</span>
             </motion.button>
 
@@ -217,25 +248,65 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
               animate={{ scale: favorited ? [1, 1.3, 1] : 1 }}
               transition={{ type: 'spring', stiffness: 500, damping: 20 }}
               onClick={() => toggleFavorite(episode.id)}
-              className={`min-h-[42px] min-w-[42px] p-2.5 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+              className={`min-h-[48px] min-w-[48px] p-3 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
                 favorited
                   ? 'bg-red-950/80 border-red-800 text-red-400'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  : 'bg-zinc-900 border-zinc-700/80 text-zinc-300 hover:text-white'
               }`}
               title="Favorite"
+              aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart className={`w-4 h-4 ${favorited ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${favorited ? 'fill-current text-red-500' : ''}`} />
             </motion.button>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Offline IndexedDB Save Button (48px target) */}
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={handleToggleOffline}
+              className={`min-h-[48px] px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                isOffline
+                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/80 shadow-sm'
+                  : isDownloading
+                  ? 'bg-zinc-800 text-yellow-300 border-zinc-700'
+                  : 'bg-zinc-900 border-zinc-700/80 text-zinc-200 hover:text-white hover:bg-zinc-800'
+              }`}
+              title={
+                isOffline
+                  ? 'Saved offline in IndexedDB (tap to remove)'
+                  : isDownloading
+                  ? `Downloading audio ${downloadProgress}%...`
+                  : 'Save episode for Offline PWA playback'
+              }
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />
+                  <span className="font-mono">{downloadProgress}%</span>
+                </>
+              ) : isOffline ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Saved Offline</span>
+                </>
+              ) : (
+                <>
+                  <HardDriveDownload className="w-4 h-4" />
+                  <span>Save Offline</span>
+                </>
+              )}
+            </motion.button>
+
+            {/* Direct MP3 link fallback */}
             <a
               href={episode.audioUrl}
               target="_blank"
               rel="noreferrer"
               download
-              className="min-h-[42px] min-w-[42px] p-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors flex items-center justify-center"
-              title="Download MP3"
+              className="min-h-[48px] min-w-[48px] p-2.5 rounded-xl border border-zinc-700/80 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors flex items-center justify-center"
+              title="Download MP3 directly"
+              aria-label="Direct MP3 Link"
             >
               <Download className="w-4 h-4" />
             </a>

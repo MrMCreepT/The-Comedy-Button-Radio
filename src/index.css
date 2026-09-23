@@ -15,6 +15,11 @@
   }
 }
 
+.font-display {
+  font-family: 'Bungee', cursive, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 /* Custom sleek scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -63,3 +68,28 @@
 .eq-bar-2 { animation: eq-pulse-2 0.75s ease-in-out infinite; }
 .eq-bar-3 { animation: eq-pulse-3 0.95s ease-in-out infinite; }
 .eq-bar-4 { animation: eq-pulse-4 0.65s ease-in-out infinite; }
+
+@keyframes button-ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-btn-ripple {
+  animation: button-ripple 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer-slide 1.4s infinite;
+}
+

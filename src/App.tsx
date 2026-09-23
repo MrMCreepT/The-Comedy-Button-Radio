@@ -1,19 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AudioProvider, useAudio } from './context/AudioContext';
+import { CastProvider } from './context/CastContext';
 import { Episode, PodcastMeta } from './types';
 import { getPodcastInfo, getEpisodes } from './services/api';
 import { pickTrueRandom } from './utils/trueRandom';
 import { Navbar } from './components/Navbar';
 import { EpisodeArchive } from './components/EpisodeArchive';
 import { AudioPlayer } from './components/AudioPlayer';
-import { EpisodeModal } from './components/EpisodeModal';
 import { RadioStreamStation } from './components/RadioStreamStation';
 import { PWABanner } from './components/PWABanner';
 import { Footer } from './components/Footer';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+// Code-split heavy modal dialogues for near-instant cold load
+const EpisodeModal = lazy(() =>
+  import('./components/EpisodeModal').then((m) => ({ default: m.EpisodeModal }))
+);
+const CastModal = lazy(() =>
+  import('./components/CastModal').then((m) => ({ default: m.CastModal }))
+);
+const ListeningStatsModal = lazy(() =>
+  import('./components/ListeningStatsModal').then((m) => ({ default: m.ListeningStatsModal }))
+);
+const CastReceiverScreen = lazy(() =>
+  import('./components/CastReceiverScreen').then((m) => ({ default: m.CastReceiverScreen }))
+);
 
 function AppContent() {
-  const { playEpisode, currentEpisode } = useAudio();
+  const {
+    playEpisode,
+    currentEpisode,
+    setPlaylist,
+    isStatsModalOpen,
+    closeStatsModal,
+    isCastReceiverOpen,
+    closeCastReceiver
+  } = useAudio();
+
   const [activeTab, setActiveTab] = useState<'stream' | 'archive'>('stream');
   const [meta, setMeta] = useState<PodcastMeta | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -32,6 +56,7 @@ function AppContent() {
       ]);
       setMeta(metaData);
       setEpisodes(epData.episodes);
+      setPlaylist(epData.episodes);
     } catch (err: any) {
       console.error('Failed to load podcast data:', err);
       setError(err.message || 'Failed to fetch episode archive from Libsyn');
@@ -48,7 +73,7 @@ function AppContent() {
     if (episodes.length === 0) return;
     const chosen = pickTrueRandom(episodes);
     if (chosen) {
-      playEpisode(chosen);
+      playEpisode(chosen, 0, 'archive');
     }
   };
 
@@ -62,7 +87,7 @@ function AppContent() {
         totalEpisodes={episodes.length}
       />
 
-      {/* Main Content View (24/7 Radio or Episode Archive) */}
+      {/* Main Content View (24/7 Radio or Complete Episode Archive) */}
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 ${
         currentEpisode ? 'pb-24 sm:pb-28' : 'pb-8 sm:pb-12'
       }`}>
@@ -108,11 +133,29 @@ function AppContent() {
       {/* Persistent Bottom Audio Player Bar */}
       <AudioPlayer onOpenEpisode={(ep) => setSelectedEpisode(ep)} />
 
-      {/* Show Notes & Episode Modal */}
-      <EpisodeModal
-        episode={selectedEpisode}
-        onClose={() => setSelectedEpisode(null)}
-      />
+      {/* Code-split Modal Dialogues */}
+      <Suspense fallback={null}>
+        {/* Show Notes & Episode Modal */}
+        <EpisodeModal
+          episode={selectedEpisode}
+          onClose={() => setSelectedEpisode(null)}
+        />
+
+        {/* Cast & Audio Output Device Modal */}
+        <CastModal />
+
+        {/* Listening Statistics & Year-in-Review Highlights Modal */}
+        <ListeningStatsModal
+          isOpen={isStatsModalOpen}
+          onClose={closeStatsModal}
+        />
+
+        {/* Dedicated Cast / TV Receiver Screen with Synchronized Lyrics & Vinyl Disc */}
+        <CastReceiverScreen
+          isOpen={isCastReceiverOpen}
+          onClose={closeCastReceiver}
+        />
+      </Suspense>
 
       {/* Ambient Mobile PWA Install Banner */}
       <PWABanner />
@@ -122,8 +165,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AudioProvider>
-      <AppContent />
-    </AudioProvider>
+    <ErrorBoundary fallbackTitle="The Comedy Button Player" fallbackMessage="An unexpected issue occurred. Click reload to refresh.">
+      <AudioProvider>
+        <CastProvider>
+          <AppContent />
+        </CastProvider>
+      </AudioProvider>
+    </ErrorBoundary>
   );
 }

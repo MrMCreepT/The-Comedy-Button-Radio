@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Share, PlusSquare, Smartphone, Download, Radio, Check } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   isIOS,
   onInstall,
 }) => {
+  const modalRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -32,6 +35,10 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 
           {/* Modal Container */}
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pwa-install-title"
             initial={{ opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.96 }}
@@ -47,7 +54,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                   className="w-14 h-14 rounded-2xl shadow-lg border border-red-500/30 object-cover"
                 />
                 <div>
-                  <h3 className="text-lg font-bold text-white leading-tight">
+                  <h3 id="pwa-install-title" className="text-lg font-bold text-white leading-tight">
                     The Comedy Button
                   </h3>
                   <p className="text-xs text-red-400 font-semibold flex items-center gap-1.5 mt-0.5">

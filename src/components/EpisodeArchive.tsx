@@ -7,11 +7,12 @@ import { getArtworkUrl, handleImageError } from '../utils/assets';
 import {
   SHOW_NOTES_TOPICS,
   POPULAR_GUEST_NAMES,
-  episodeMatchesTopic,
-  getEpisodeDetectedTopics,
-  extractShowNotesSnippet
+  episodeMatchesTopic
 } from '../utils/showNotesFilter';
+import { downloadEpisodeForOffline } from '../utils/offlineStorage';
 import { OfficialLinksBar } from './OfficialLinksBar';
+import { EpisodeCard } from './EpisodeCard';
+import { EpisodePagination } from './EpisodePagination';
 import {
   Search,
   Play,
@@ -33,7 +34,11 @@ import {
   ChevronUp,
   Sparkles,
   Users,
-  RotateCcw
+  RotateCcw,
+  CheckCircle2,
+  HardDriveDownload,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 interface EpisodeArchiveProps {
@@ -42,36 +47,6 @@ interface EpisodeArchiveProps {
   loading: boolean;
   onOpenEpisode: (episode: Episode) => void;
   onPlayTrueRandom?: () => void;
-}
-
-function HighlightedSnippet({
-  snippet,
-  highlight
-}: {
-  snippet: string;
-  highlight?: string;
-}) {
-  if (!highlight || !highlight.trim()) {
-    return <span>{snippet}</span>;
-  }
-  const escaped = highlight.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = snippet.split(new RegExp(`(${escaped})`, 'gi'));
-  return (
-    <span>
-      {parts.map((part, i) =>
-        part.toLowerCase() === highlight.trim().toLowerCase() ? (
-          <mark
-            key={i}
-            className="bg-red-500/30 text-red-200 px-1 py-0.5 rounded font-bold border border-red-500/50"
-          >
-            {part}
-          </mark>
-        ) : (
-          part
-        )
-      )}
-    </span>
-  );
 }
 
 export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
@@ -89,14 +64,48 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
     toggleFavorite,
     isFavorite,
     isListened,
-    toggleListened
+    toggleListened,
+    isOfflineSaved,
+    refreshOfflineIds,
+    removeOfflineEpisode,
+    offlineDownloadedIds
   } = useAudio();
+
+  const [downloadingEpisodes, setDownloadingEpisodes] = useState<Record<string, number>>({});
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownloadOffline = async (ep: Episode) => {
+    if (downloadingEpisodes[ep.id] !== undefined) return;
+
+    if (isOfflineSaved(ep.id)) {
+      await removeOfflineEpisode(ep.id);
+      return;
+    }
+
+    try {
+      setDownloadingEpisodes((prev) => ({ ...prev, [ep.id]: 0 }));
+      await downloadEpisodeForOffline(ep, (progress) => {
+        setDownloadingEpisodes((prev) => ({ ...prev, [ep.id]: progress }));
+      });
+      await refreshOfflineIds();
+    } catch (err: any) {
+      console.error('Failed to download episode offline:', err);
+      setDownloadError(`Could not cache offline: ${err.message || 'Network error'}`);
+      setTimeout(() => setDownloadError(null), 4000);
+    } finally {
+      setDownloadingEpisodes((prev) => {
+        const next = { ...prev };
+        delete next[ep.id];
+        return next;
+      });
+    }
+  };
 
   const [search, setSearch] = useState('');
   const [searchScope, setSearchScope] = useState<'all' | 'notes' | 'title'>('all');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [selectedGuest, setSelectedGuest] = useState<string>('all');
-  const [filterType, setFilterType] = useState<'all' | 'unplayed' | 'favorites' | 'specials'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'unplayed' | 'favorites' | 'downloaded' | 'specials'>('all');
   const [selectedEra, setSelectedEra] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'longest' | 'shortest'>('newest');
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,11 +170,13 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
       });
     }
 
-    // Filter type (playback status / specials)
+    // Filter type (playback status / downloaded / specials)
     if (filterType === 'unplayed') {
       result = result.filter((ep) => !isListened(ep.id));
     } else if (filterType === 'favorites') {
       result = result.filter((ep) => isFavorite(ep.id));
+    } else if (filterType === 'downloaded') {
+      result = result.filter((ep) => isOfflineSaved(ep.id));
     } else if (filterType === 'specials') {
       result = result.filter((ep) => ep.isBonus || ep.isSpecial || !ep.episodeNumber);
     }
@@ -211,7 +222,9 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
     selectedEra,
     sortBy,
     isListened,
-    isFavorite
+    isFavorite,
+    isOfflineSaved,
+    offlineDownloadedIds
   ]);
 
   // Check if any filters are active
@@ -541,6 +554,7 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
               { id: 'all', label: 'All Episodes' },
               { id: 'unplayed', label: 'Unplayed' },
               { id: 'favorites', label: 'Favorites' },
+              { id: 'downloaded', label: `Offline Saved (${offlineDownloadedIds.size})` },
               { id: 'specials', label: 'Specials & Bonus' }
             ].map((f) => (
               <button
@@ -549,13 +563,14 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
                   setFilterType(f.id as any);
                   setCurrentPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
                   filterType === f.id
                     ? 'bg-zinc-100 text-zinc-900 font-bold shadow-sm'
                     : 'bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                 }`}
               >
-                {f.label}
+                {f.id === 'downloaded' && <HardDriveDownload className="w-3.5 h-3.5 text-emerald-400" />}
+                <span>{f.label}</span>
               </button>
             ))}
           </div>
@@ -698,353 +713,54 @@ export const EpisodeArchive: React.FC<EpisodeArchiveProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {paginatedEpisodes.map(episode => {
-            const isCurrent = currentEpisode?.id === episode.id;
-            const isEpPlaying = isCurrent && isPlaying;
-            const favorited = isFavorite(episode.id);
-            const listened = isListened(episode.id);
-            const isNotesExpanded = expandedNotesEpisodeId === episode.id;
-            const detectedTopics = getEpisodeDetectedTopics(episode);
-
-            // Compute snippet highlight if search or topic is active
-            const currentTopicObj = SHOW_NOTES_TOPICS.find((t) => t.id === selectedTopic);
-            const queryForSnippet = search.trim() || (selectedTopic !== 'all' && currentTopicObj?.keywords[0]) || '';
-            const snippetData = extractShowNotesSnippet(episode.description, queryForSnippet);
-
-            return (
-              <motion.article
-                key={episode.id}
-                layout="position"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`group bg-[#121520] hover:bg-[#161a28] border rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between gap-3 ${
-                  isCurrent
-                    ? 'border-red-600/70 shadow-lg shadow-red-950/30'
-                    : 'border-zinc-800 hover:border-zinc-700/80 shadow-sm'
-                }`}
-              >
-                {/* Main Card Content Row */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  {/* Left: Thumbnail + Play Overlay */}
-                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
-                    <div className="relative shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-zinc-700/80 shadow-md">
-                      <img
-                        src={getArtworkUrl(episode.imageUrl || meta?.imageUrl)}
-                        alt={episode.title}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        onError={handleImageError}
-                        referrerPolicy="no-referrer"
-                      />
-
-                      <motion.button
-                        whileTap={{ scale: 0.88 }}
-                        onClick={() => {
-                          if (isCurrent) {
-                            togglePlay();
-                          } else {
-                            playEpisode(episode);
-                          }
-                        }}
-                        className={`absolute inset-0 flex items-center justify-center transition-all cursor-pointer ${
-                          isCurrent
-                            ? 'bg-black/60 opacity-100'
-                            : 'bg-black/40 opacity-0 group-hover:opacity-100'
-                        }`}
-                        title={isEpPlaying ? 'Pause' : 'Play Episode'}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg">
-                          {isEpPlaying ? (
-                            <Pause className="w-4 h-4 fill-current" />
-                          ) : (
-                            <Play className="w-4 h-4 fill-current ml-0.5" />
-                          )}
-                        </div>
-                      </motion.button>
-                    </div>
-
-                    {/* Title, Metadata & Topic Tags */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                        {episode.episodeNumber && (
-                          <span className="text-[10px] font-bold uppercase bg-red-950/70 text-red-300 border border-red-800/50 px-2 py-0.5 rounded-md">
-                            EP {episode.episodeNumber}
-                          </span>
-                        )}
-                        {episode.isBonus && (
-                          <span className="text-[10px] font-medium bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md">
-                            Special
-                          </span>
-                        )}
-                        {listened && (
-                          <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                            <Check className="w-3 h-3 text-zinc-500" /> Played
-                          </span>
-                        )}
-
-                        {/* Show Notes Detected Topic Badges */}
-                        {detectedTopics.slice(0, 3).map((top) => (
-                          <button
-                            key={top.id}
-                            onClick={() => {
-                              setSelectedTopic(top.id);
-                              setCurrentPage(1);
-                            }}
-                            className="text-[10px] font-medium bg-zinc-900/90 text-zinc-300 hover:text-red-300 hover:bg-zinc-800 px-2 py-0.5 rounded-md border border-zinc-700/60 transition-colors flex items-center gap-1 cursor-pointer"
-                            title={`Filter episodes by ${top.label}`}
-                          >
-                            <span>{top.emoji}</span>
-                            <span>{top.shortLabel}</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      <h2
-                        onClick={() => onOpenEpisode(episode)}
-                        className={`text-sm sm:text-base font-semibold truncate cursor-pointer transition-colors ${
-                          isCurrent
-                            ? 'text-red-400 font-bold'
-                            : 'text-zinc-100 hover:text-red-400'
-                        }`}
-                        title={episode.title}
-                      >
-                        {episode.title}
-                      </h2>
-
-                      {/* Snippet / Description Preview */}
-                      <p className="text-xs text-zinc-400 line-clamp-1 mt-0.5">
-                        {snippetData.isMatched ? (
-                          <span className="text-zinc-300">
-                            <span className="text-red-400 font-semibold mr-1">
-                              Show notes match:
-                            </span>
-                            <HighlightedSnippet
-                              snippet={snippetData.snippet}
-                              highlight={snippetData.matchedText || search}
-                            />
-                          </span>
-                        ) : (
-                          episode.description.replace(/<[^>]*>?/gm, '')
-                        )}
-                      </p>
-
-                      <div className="flex items-center gap-3 text-[11px] text-zinc-400 mt-1.5 font-medium">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-zinc-500" />
-                          {episode.pubDate ? formatDate(episode.pubDate) : 'Archive'}
-                        </span>
-                        {episode.duration && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-zinc-500" />
-                            {episode.duration}
-                          </span>
-                        )}
-                        {episode.detectedGuests && episode.detectedGuests.length > 0 && (
-                          <span className="hidden sm:flex items-center gap-1 text-red-300/80">
-                            <Users className="w-3 h-3 text-red-400" />
-                            <span>Guests: {episode.detectedGuests.join(', ')}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Actions: Play button, Inline Notes Toggle, Details, Favorite, Download */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center shrink-0">
-                    {/* Primary Play Button */}
-                    <motion.button
-                      whileTap={{ scale: 0.92 }}
-                      onClick={() => {
-                        if (isCurrent) {
-                          togglePlay();
-                        } else {
-                          playEpisode(episode);
-                        }
-                      }}
-                      className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        isCurrent
-                          ? 'bg-red-600 text-white shadow-md shadow-red-950/40'
-                          : 'bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200'
-                      }`}
-                    >
-                      {isEpPlaying ? (
-                        <>
-                          <Pause className="w-3.5 h-3.5 fill-current" />
-                          <span>Playing</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                          <span>Play</span>
-                        </>
-                      )}
-                    </motion.button>
-
-                    {/* Inline Expand Show Notes Toggle Button */}
-                    <motion.button
-                      whileTap={{ scale: 0.92 }}
-                      onClick={() =>
-                        setExpandedNotesEpisodeId(isNotesExpanded ? null : episode.id)
-                      }
-                      className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer border ${
-                        isNotesExpanded
-                          ? 'bg-red-950/70 border-red-700 text-red-300'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
-                      }`}
-                      title={isNotesExpanded ? 'Collapse Show Notes' : 'Read Show Notes Inline'}
-                    >
-                      <FileText className="w-3.5 h-3.5 text-red-400" />
-                      <span className="hidden sm:inline">Notes</span>
-                      {isNotesExpanded ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      )}
-                    </motion.button>
-
-                    {/* Open Details Modal */}
-                    <motion.button
-                      whileTap={{ scale: 0.88 }}
-                      onClick={() => onOpenEpisode(episode)}
-                      className="min-h-[38px] min-w-[38px] p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
-                      title="Open Full Episode Overview"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                    </motion.button>
-
-                    {/* Favorite with bouncy heart */}
-                    <motion.button
-                      whileTap={{ scale: 0.8 }}
-                      animate={{ scale: favorited ? [1, 1.35, 1] : 1 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                      onClick={() => toggleFavorite(episode.id)}
-                      className={`min-h-[38px] min-w-[38px] p-2 rounded-xl transition-colors flex items-center justify-center cursor-pointer ${
-                        favorited
-                          ? 'text-red-500 hover:text-red-400'
-                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
-                      }`}
-                      title={favorited ? 'Remove from favorites' : 'Favorite'}
-                    >
-                      <Heart className={`w-4 h-4 ${favorited ? 'fill-current' : ''}`} />
-                    </motion.button>
-
-                    {/* Download MP3 */}
-                    <a
-                      href={episode.audioUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      download
-                      className="min-h-[38px] min-w-[38px] p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors hidden md:flex items-center justify-center"
-                      title="Direct MP3 Link"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Inline Expandable Show Notes Drawer */}
-                <AnimatePresence>
-                  {isNotesExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden pt-3 border-t border-zinc-800/80 text-xs"
-                    >
-                      <div className="bg-[#161a28] rounded-xl p-4 border border-zinc-800/80 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-zinc-200 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-                            <FileText className="w-3.5 h-3.5 text-red-400" />
-                            Official Episode Show Notes
-                          </span>
-                          <button
-                            onClick={() => onOpenEpisode(episode)}
-                            className="text-red-400 hover:text-red-300 font-semibold text-[11px] cursor-pointer"
-                          >
-                            Open in Full Modal →
-                          </button>
-                        </div>
-
-                        <div
-                          className="text-zinc-300 leading-relaxed space-y-2 prose prose-invert prose-p:my-1 max-w-none text-xs"
-                          dangerouslySetInnerHTML={{
-                            __html: episode.descriptionHtml || `<p>${episode.description}</p>`
-                          }}
-                        />
-
-                        {episode.detectedGuests && episode.detectedGuests.length > 0 && (
-                          <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-1.5">
-                            <span className="text-zinc-400 font-semibold text-[11px]">
-                              Guests in this episode:
-                            </span>
-                            {episode.detectedGuests.map((g) => (
-                              <button
-                                key={g}
-                                onClick={() => {
-                                  setSelectedTopic('guests');
-                                  setSelectedGuest(g);
-                                  setCurrentPage(1);
-                                }}
-                                className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 text-[10px] cursor-pointer"
-                              >
-                                {g}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.article>
-            );
-          })}
+          {paginatedEpisodes.map((episode) => (
+            <EpisodeCard
+              key={episode.id}
+              episode={episode}
+              artworkFallback={meta?.imageUrl}
+              isCurrent={currentEpisode?.id === episode.id}
+              isEpPlaying={currentEpisode?.id === episode.id && isPlaying}
+              favorited={isFavorite(episode.id)}
+              listened={isListened(episode.id)}
+              isNotesExpanded={expandedNotesEpisodeId === episode.id}
+              isOffline={isOfflineSaved(episode.id)}
+              isDownloading={downloadingEpisodes[episode.id] !== undefined}
+              downloadProgress={downloadingEpisodes[episode.id] || 0}
+              selectedTopic={selectedTopic}
+              search={search}
+              onPlay={() => {
+                if (currentEpisode?.id === episode.id) {
+                  togglePlay();
+                } else {
+                  playEpisode(episode, 0, 'archive');
+                }
+              }}
+              onOpenEpisode={onOpenEpisode}
+              onToggleFavorite={toggleFavorite}
+              onToggleNotes={(id) =>
+                setExpandedNotesEpisodeId(expandedNotesEpisodeId === id ? null : id)
+              }
+              onDownloadOffline={handleDownloadOffline}
+              onSelectTopic={(topicId) => {
+                setSelectedTopic(topicId);
+                setCurrentPage(1);
+              }}
+              onSelectGuest={(guest) => {
+                setSelectedTopic('guests');
+                setSelectedGuest(guest);
+                setCurrentPage(1);
+              }}
+            />
+          ))}
         </div>
       )}
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          <div className="flex items-center gap-1 text-xs font-semibold">
-            {Array.from({ length: Math.min(totalPages, 7) }, (_, idx) => {
-              let pageNum = idx + 1;
-              if (totalPages > 7 && currentPage > 4) {
-                pageNum = currentPage - 4 + idx;
-                if (pageNum > totalPages) pageNum = totalPages - (6 - idx);
-              }
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={`w-8 h-8 rounded-lg transition-colors cursor-pointer ${
-                    currentPage === pageNum
-                      ? 'bg-red-600 text-white'
-                      : 'bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <EpisodePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };

@@ -12,6 +12,8 @@ import {
   MessageSquare,
   ChevronDown,
   Compass,
+  BarChart3,
+  Tv
 } from 'lucide-react';
 import { ComedyButtonLogo } from './ComedyButtonLogo';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -50,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onPlayTrueRandom,
   totalEpisodes,
 }) => {
+  const { openStatsModal, openCastReceiver } = useAudio();
   const [linksOpen, setLinksOpen] = useState(false);
   const linksRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Right Action: T-Shirts, Links Dropdown, PWA, Shuffle */}
+          {/* Right Action: T-Shirts, Links Dropdown, Stats, PWA, Shuffle */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Direct T-Shirts Store Link */}
             <motion.a
@@ -223,11 +226,57 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
                         </a>
                       ))}
+
+                      {/* In-App Player Tools */}
+                      <div className="pt-1.5 border-t border-zinc-800/80 mt-1 flex flex-col gap-1">
+                        <button
+                          onClick={() => {
+                            setLinksOpen(false);
+                            openStatsModal();
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
+                        >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-red-950/50 border border-red-800/60 text-red-400">
+                            <BarChart3 className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-bold text-zinc-200 block truncate">Listening Stats & Wrapped</span>
+                            <span className="text-[10px] text-zinc-400 block truncate">Total hours, era breakdown & streak</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLinksOpen(false);
+                            openCastReceiver();
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
+                        >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-purple-950/50 border border-purple-800/60 text-purple-400">
+                            <Tv className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-bold text-zinc-200 block truncate">TV Receiver Display</span>
+                            <span className="text-[10px] text-zinc-400 block truncate">Full screen ambient artwork & vinyl</span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Listening Stats & Highlights Quick Action */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={openStatsModal}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              title="Your Listening Stats & Year-in-Review Highlights"
+              aria-label="Listening Stats and Year in Review"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-red-400" />
+              <span className="hidden lg:inline">Stats</span>
+            </motion.button>
 
             {/* PWA In-App Install Button */}
             <PWAInstallButton />
@@ -263,12 +312,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Mobile Segmented Navigation (underneath top bar, full width, zero overflow) */}
+        {/* Mobile Segmented Navigation (underneath top bar, 2 columns: Radio & Episodes) */}
         <div className="sm:hidden pb-2.5 pt-0.5">
           <nav className="grid grid-cols-2 p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative w-full">
             <button
               onClick={() => setActiveTab('stream')}
-              className={`relative min-h-[38px] py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer z-10 ${
+              className={`relative min-h-[38px] py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer z-10 ${
                 activeTab === 'stream' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -281,14 +330,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
               <div className="relative z-10 flex items-center justify-center">
                 <Radio className="w-3.5 h-3.5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-300 animate-ping" />
+                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-red-300 animate-ping" />
               </div>
-              <span className="relative z-10">24/7 Radio</span>
+              <span className="relative z-10 text-xs">24/7 Radio</span>
             </button>
 
             <button
               onClick={() => setActiveTab('archive')}
-              className={`relative min-h-[38px] py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer z-10 ${
+              className={`relative min-h-[38px] py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer z-10 ${
                 activeTab === 'archive' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -300,16 +349,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               )}
               <Library className="w-3.5 h-3.5 relative z-10" />
-              <span className="relative z-10">Episodes</span>
-              <span
-                className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
-                  activeTab === 'archive'
-                    ? 'bg-red-700/80 text-white'
-                    : 'bg-zinc-800 text-zinc-400'
-                }`}
-              >
-                {totalEpisodes || '560+'}
-              </span>
+              <span className="relative z-10 text-xs">Episodes ({totalEpisodes || '560+'})</span>
             </button>
           </nav>
         </div>
