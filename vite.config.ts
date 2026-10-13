@@ -6,8 +6,8 @@ import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
-    // Relative base path ensures GitHub Pages project sites (e.g. /The-Comedy-Button-Radio/) resolve assets properly
-    base: process.env.VITE_BASE_URL || './',
+    // Root base path for AI Studio preview & standard hosting; configurable via VITE_BASE_URL for GitHub Pages
+    base: process.env.VITE_BASE_URL || '/',
     plugins: [
       react(),
       tailwindcss(),
@@ -117,7 +117,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module',
         },
       }),
@@ -151,6 +151,7 @@ export default defineConfig(() => {
       },
     },
     server: {
+      allowedHosts: true,
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',

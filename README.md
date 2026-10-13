@@ -34,21 +34,30 @@ Designed as a Progressive Web App (PWA) with offline caching, hardware-accelerat
   - Guest appearance badges (e.g. Jared Petty, Greg Miller, Ryan Clements).
   - Formatted HTML descriptions, original publication timestamps, and source links.
 
-### 🔊 Voice Boost & Web Audio DSP
+### 🔊 Voice Boost, Web Audio DSP & Dynamic Waveform Visualizer
 - **Speech Clarity Engine**:
   - Web Audio API dynamics processing chain with high-pass rumble reduction (80Hz cutoff), vocal presence peaking filter (2.4kHz boost), and intelligent dynamic range compression (threshold: -24dB, knee: 30dB, ratio: 4:1).
   - One-tap toggle in desktop player and mobile drawer with animated active indicator.
+- **Dynamic 60fps Audio Waveform Visualizer**:
+  - Real-time animated canvas waveform visualizer in the mobile player drawer with fluid amplitude physics, crimson-to-amber color gradients, and gentle resting state during pauses.
 - **Native Direct CDN & Seamless CORS Proxy**:
   - Direct hardware-accelerated playback from Libsyn CDN.
   - Automatic fallback proxy (`/api/audio-proxy`) when Web Audio API analysis or cross-origin headers are required.
 
-### 📱 Progressive Web App (PWA) & Offline Playback
+### 📱 Progressive Web App (PWA) & Offline Storage Manager
 - **Installable Native Experience**:
   - Full Web App Manifest with portrait orientation lock, custom theme colors, and standalone display mode.
   - Automated icon generator for Android, iOS (`apple-touch-icon`), and desktop maskable formats.
+- **Device Storage & Quota Dashboard**:
+  - Live storage measurement via `navigator.storage.estimate()` showing device headroom and cached podcast audio MBs.
+  - Per-episode cache manager with file size badges and single-tap deletion.
+  - Bulk actions: "Download Next 3 Episodes" queue and "Clear All Downloads" instant storage reclamation.
 - **IndexedDB Offline Audio Storage**:
   - Save full episode audio files directly to browser IndexedDB for offline listening on flights or commutes.
   - Background Service Worker caching (Workbox) for instant sub-second app reloads.
+
+### 🌓 OLED Pure Black Theme Mode
+- **True Pitch-Black Theme**: One-tap toggle (`#000000` background, `#141414` elevated surfaces, `#242424` borders) to eliminate display glow and save battery life on modern OLED smartphone screens, persisted in `localStorage`.
 
 ### 📺 Google Cast & TV Receiver Screen
 - **Google Cast Web Sender**: Stream audio seamlessly to Chromecasts, Google Nest Hubs, and smart TVs.

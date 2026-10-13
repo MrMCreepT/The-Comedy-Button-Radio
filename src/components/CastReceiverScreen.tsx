@@ -23,7 +23,6 @@ interface CastReceiverScreenProps {
 }
 
 export const CastReceiverScreen: React.FC<CastReceiverScreenProps> = ({ isOpen = true, onClose }) => {
-  if (!isOpen) return null;
   const {
     currentEpisode,
     isPlaying,
@@ -44,6 +43,8 @@ export const CastReceiverScreen: React.FC<CastReceiverScreenProps> = ({ isOpen =
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  if (!isOpen) return null;
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

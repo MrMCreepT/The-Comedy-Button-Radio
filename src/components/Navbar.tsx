@@ -13,17 +13,23 @@ import {
   ChevronDown,
   Compass,
   BarChart3,
-  Tv
+  Tv,
+  HardDrive,
+  Moon,
+  Sun,
+  Sparkles
 } from 'lucide-react';
 import { ComedyButtonLogo } from './ComedyButtonLogo';
 import { PWAInstallButton } from './PWAInstallButton';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 import { OFFICIAL_LINKS, PodcastLink } from '../data/links';
 
 interface NavbarProps {
   activeTab: 'stream' | 'archive';
   setActiveTab: (tab: 'stream' | 'archive') => void;
   onPlayTrueRandom?: () => void;
+  onOpenThemeIntro?: () => void;
   totalEpisodes: number;
 }
 
@@ -50,9 +56,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onPlayTrueRandom,
+  onOpenThemeIntro,
   totalEpisodes,
 }) => {
-  const { openStatsModal, openCastReceiver } = useAudio();
+  const { openStatsModal, openCastReceiver, openStorageModal } = useAudio();
+  const { isOled, toggleOled } = useTheme();
   const [linksOpen, setLinksOpen] = useState(false);
   const linksRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +158,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ExternalLink className="w-2.5 h-2.5 text-amber-400/70" />
             </motion.a>
 
+            {/* Direct Theme Intro Button */}
+            {onOpenThemeIntro && (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onOpenThemeIntro}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-gradient-to-r from-red-600/20 to-amber-500/20 hover:from-red-600/30 hover:to-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold shadow-sm transition-all cursor-pointer"
+                title="Watch The Comedy Button Theme Song & Opening Animation"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span className="text-[11px] sm:text-xs">
+                  <span className="inline sm:hidden">Intro</span>
+                  <span className="hidden sm:inline">Theme Intro</span>
+                </span>
+              </motion.button>
+            )}
+
             {/* Official Links Dropdown Menu */}
             <div className="relative" ref={linksRef}>
               <motion.button
@@ -229,6 +254,27 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                       {/* In-App Player Tools */}
                       <div className="pt-1.5 border-t border-zinc-800/80 mt-1 flex flex-col gap-1">
+                        {onOpenThemeIntro && (
+                          <button
+                            onClick={() => {
+                              setLinksOpen(false);
+                              onOpenThemeIntro();
+                            }}
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full group"
+                          >
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-red-950/60 border border-red-800/60 text-red-400 group-hover:scale-105 transition-transform">
+                              <Sparkles className="w-4 h-4 text-amber-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-bold text-zinc-200 group-hover:text-red-400 block truncate transition-colors">
+                                Show Intro & Theme Tune
+                              </span>
+                              <span className="text-[10px] text-zinc-400 block truncate">
+                                Watch host roll call & rock out to the theme
+                              </span>
+                            </div>
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setLinksOpen(false);
@@ -259,12 +305,58 @@ export const Navbar: React.FC<NavbarProps> = ({
                             <span className="text-[10px] text-zinc-400 block truncate">Full screen ambient artwork & vinyl</span>
                           </div>
                         </button>
+                        <button
+                          onClick={() => {
+                            setLinksOpen(false);
+                            openStorageModal();
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
+                        >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-emerald-950/50 border border-emerald-800/60 text-emerald-400">
+                            <HardDrive className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-bold text-zinc-200 block truncate">Downloads & Storage</span>
+                            <span className="text-[10px] text-zinc-400 block truncate">Offline audio cache & device headroom</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLinksOpen(false);
+                            toggleOled();
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                            isOled ? 'bg-amber-950/50 border-amber-800/60 text-amber-400' : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                          }`}>
+                            {isOled ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-bold text-zinc-200 block truncate">OLED Pure Black Mode</span>
+                            <span className="text-[10px] text-zinc-400 block truncate">
+                              {isOled ? 'Enabled (#000000 true black)' : 'Disabled (Standard dark mode)'}
+                            </span>
+                          </div>
+                        </button>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Offline Storage Manager Quick Action */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={openStorageModal}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              title="Offline Audio Storage & Downloads"
+              aria-label="Offline Audio Storage and Downloads"
+            >
+              <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Downloads</span>
+            </motion.button>
 
             {/* Listening Stats & Highlights Quick Action */}
             <motion.button
@@ -276,6 +368,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <BarChart3 className="w-3.5 h-3.5 text-red-400" />
               <span className="hidden lg:inline">Stats</span>
+            </motion.button>
+
+            {/* OLED Mode Quick Switcher */}
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={toggleOled}
+              className={`flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl border text-xs font-semibold shadow-sm transition-all cursor-pointer ${
+                isOled
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-amber-950/20'
+                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 hover:text-white'
+              }`}
+              title={isOled ? 'Switch to Standard Dark Mode' : 'Switch to OLED Pure Black Mode'}
+              aria-label={isOled ? 'Switch to Standard Dark Mode' : 'Switch to OLED Pure Black Mode'}
+              aria-pressed={isOled}
+            >
+              {isOled ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-400" />}
             </motion.button>
 
             {/* PWA In-App Install Button */}

@@ -25,6 +25,7 @@ import {
   HardDriveDownload,
   Loader2
 } from 'lucide-react';
+import { ComedyPlayButton } from './ComedyPlayButton';
 
 function HighlightedSnippet({
   snippet,
@@ -129,38 +130,21 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = React.memo(({
               referrerPolicy="no-referrer"
             />
 
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.88 }}
-              onClick={onPlay}
-              className={`absolute inset-0 flex items-center justify-center transition-all cursor-pointer ${
+            <div
+              className={`absolute inset-0 flex items-center justify-center transition-all ${
                 isCurrent
                   ? 'bg-black/60 opacity-100'
                   : 'bg-black/40 opacity-0 group-hover:opacity-100'
               }`}
-              title={isEpPlaying ? 'Pause' : 'Play Episode'}
-              aria-label={isEpPlaying ? 'Pause' : 'Play Episode'}
             >
-              <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-black/50">
-                {isEpPlaying ? (
-                  <motion.div
-                    key="pause"
-                    initial={{ scale: 0.5, rotate: -45 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                  >
-                    <Pause className="w-4 h-4 fill-current" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="play"
-                    initial={{ scale: 0.5, rotate: 45 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                  >
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  </motion.div>
-                )}
-              </div>
-            </motion.button>
+              <ComedyPlayButton
+                size="sm"
+                isPlaying={isEpPlaying}
+                onClick={onPlay}
+                title={isEpPlaying ? 'Pause' : 'Play Episode'}
+                ariaLabel={isEpPlaying ? 'Pause' : 'Play Episode'}
+              />
+            </div>
           </div>
 
           {/* Title, Metadata & Topic Tags */}

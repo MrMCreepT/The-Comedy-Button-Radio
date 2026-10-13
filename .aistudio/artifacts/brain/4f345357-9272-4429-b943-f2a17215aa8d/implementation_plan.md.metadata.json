@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan to add an interactive audio waveform visualizer in the mobile player drawer, an optional pure-black OLED theme mode, and a comprehensive offline storage manager with device quota metrics and bulk download/deletion capabilities.",
+  "updatedAt": "2026-10-13T21:04:23.998419672Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

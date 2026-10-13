@@ -6,7 +6,6 @@ import { useCast } from '../context/CastContext';
 import { getStreamTimeline } from '../services/api';
 import { formatSeconds } from '../utils/format';
 import { getArtworkUrl, handleImageError } from '../utils/assets';
-import { OfficialLinksBar } from './OfficialLinksBar';
 import { triggerHaptic } from '../utils/haptics';
 import {
   Radio,
@@ -30,13 +29,16 @@ import {
   Bell,
   FileText
 } from 'lucide-react';
+import { ComedyPlayButton } from './ComedyPlayButton';
 
 interface RadioStreamStationProps {
   onOpenEpisode?: (episode: Episode) => void;
+  onOpenThemeIntro?: () => void;
 }
 
 export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
-  onOpenEpisode
+  onOpenEpisode,
+  onOpenThemeIntro,
 }) => {
   const {
     currentEpisode,
@@ -261,6 +263,17 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
               <span className="hidden xs:inline">{isCasting ? 'Casting' : 'Cast'}</span>
               {isCasting && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
             </button>
+            {onOpenThemeIntro && (
+              <button
+                onClick={onOpenThemeIntro}
+                className="px-3 py-2 rounded-xl bg-gradient-to-r from-red-950/70 to-amber-950/70 hover:from-red-900/70 hover:to-amber-900/70 border border-amber-500/40 text-xs text-amber-300 font-bold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+                title="Play Opening Theme Animation"
+                aria-label="Play Opening Theme Animation"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span className="hidden sm:inline">Theme Intro</span>
+              </button>
+            )}
 
             <button
               onClick={handleShareStation}
@@ -298,9 +311,21 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
             {/* Dark gradient vignette */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
+            {/* Centered Comedy Button on Cover Art */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+              <ComedyPlayButton
+                size="md"
+                isPlaying={isPlayingCurrentBroadcast}
+                onClick={handleTuneInLive}
+                disabled={!onAirEpisode}
+                title={isPlayingCurrentBroadcast ? 'Pause live broadcast' : 'Press the Comedy Button to Tune In Live'}
+                ariaLabel={isPlayingCurrentBroadcast ? 'Pause live broadcast' : 'Tune In Live'}
+              />
+            </div>
+
             {/* Live Equalizer indicator */}
             {isPlayingCurrentBroadcast && (
-              <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-black/60 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center gap-1 border border-zinc-700/60">
+              <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-black/60 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center gap-1 border border-zinc-700/60 pointer-events-none">
                 <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-1" />
                 <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-2" />
                 <span className="w-1 bg-red-500 rounded-full h-3 sm:h-4 eq-bar-3" />
@@ -311,7 +336,7 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
 
             {/* Episode Number pill */}
             {onAirEpisode?.episodeNumber && (
-              <span className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 text-[11px] sm:text-xs font-bold text-white bg-red-600/90 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg backdrop-blur-sm shadow-md">
+              <span className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 text-[11px] sm:text-xs font-bold text-white bg-red-600/90 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg backdrop-blur-sm shadow-md pointer-events-none">
                 EP {onAirEpisode.episodeNumber}
               </span>
             )}
@@ -360,31 +385,30 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
               </div>
             </div>
 
-            {/* Tune In Live Call To Action Button */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 pt-2">
-              <button
+            {/* Tune In Live Call To Action with The Comedy Button */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
+              <div
                 onClick={handleTuneInLive}
-                disabled={!onAirEpisode}
-                aria-pressed={isPlayingCurrentBroadcast}
-                className="relative overflow-hidden w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-red-500 to-red-600 hover:from-red-500 hover:to-red-500 active:scale-95 disabled:opacity-50 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-red-950/60 transition-transform cursor-pointer group"
+                className="w-full sm:w-auto p-2.5 sm:p-3 pr-5 sm:pr-6 rounded-2xl bg-[#181c28] hover:bg-[#1f2434] border border-zinc-700/80 hover:border-red-600/60 transition-all flex items-center justify-center sm:justify-start gap-3.5 shadow-xl shadow-black/50 cursor-pointer group select-none"
               >
-                {/* Ambient Shimmer / Pulse */}
-                {isPlayingCurrentBroadcast && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-shimmer pointer-events-none" />
-                )}
-
-                {isPlayingCurrentBroadcast ? (
-                  <div className="flex items-center gap-2">
-                    <Pause className="w-5 h-5 fill-current" />
-                    <span>Pause Broadcast</span>
+                <ComedyPlayButton
+                  size="md"
+                  isPlaying={isPlayingCurrentBroadcast}
+                  onClick={handleTuneInLive}
+                  disabled={!onAirEpisode}
+                  title={isPlayingCurrentBroadcast ? 'Pause broadcast' : 'Press the Comedy Button to Tune In Live'}
+                  ariaLabel={isPlayingCurrentBroadcast ? 'Pause broadcast' : 'Tune In Live'}
+                />
+                <div className="text-left">
+                  <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${isPlayingCurrentBroadcast ? 'bg-red-500 animate-ping' : 'bg-zinc-500'}`} />
+                    <span>{isPlayingCurrentBroadcast ? 'LIVE BROADCAST' : 'THE COMEDY BUTTON'}</span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Play className="w-5 h-5 fill-current ml-0.5" />
-                    <span>Tune In Live</span>
+                  <div className="text-sm sm:text-base font-extrabold text-white group-hover:text-red-400 transition-colors">
+                    {isPlayingCurrentBroadcast ? 'Pause Broadcast' : 'Press Button to Tune In'}
                   </div>
-                )}
-              </button>
+                </div>
+              </div>
 
               {/* Sync to Live button with animated morph into progress bar */}
               {(isSyncing || (currentEpisode?.id === onAirEpisode?.id && Math.abs(currentTime - liveOffsetSeconds) > 10)) && (
@@ -610,17 +634,16 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
                     </div>
                   </div>
 
-                  <button
+                  <ComedyPlayButton
+                    size="sm"
+                    isPlaying={currentEpisode?.id === item.episode.id && isPlaying}
                     onClick={() => {
                       triggerHaptic(10);
                       playEpisode(item.episode, 0, 'archive');
                     }}
-                    className="min-h-[40px] min-w-[40px] p-2 rounded-xl bg-zinc-800 hover:bg-red-600 hover:text-white text-zinc-300 transition-colors cursor-pointer flex items-center justify-center"
-                    title="Play this past episode on-demand"
-                    aria-label={`Play ${item.episode.title}`}
-                  >
-                    <Play className="w-4 h-4 fill-current" />
-                  </button>
+                    title={`Play ${item.episode.title}`}
+                    ariaLabel={`Play ${item.episode.title}`}
+                  />
                 </div>
               ))
             ) : (
@@ -636,17 +659,6 @@ export const RadioStreamStation: React.FC<RadioStreamStationProps> = ({
         <p className="leading-relaxed">
           <strong className="text-zinc-100">How the 24/7 Live Radio works:</strong> Every listener around the world hears the exact same show at the exact same time. The master schedule shuffles all 560+ episodes across 12+ years of comedy, broadcasting non-stop 24 hours a day, 7 days a week. For listening in chronological order or specific searches, switch to the <span className="text-red-400 font-semibold">Episodes</span> tab.
         </p>
-      </div>
-
-      {/* Official Community Channels, Store & Support Cards */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-            Official Channels & T-Shirts
-          </h3>
-          <span className="text-[11px] text-zinc-400">Official Comedy Button Links</span>
-        </div>
-        <OfficialLinksBar variant="cards" />
       </div>
     </div>
   );

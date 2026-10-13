@@ -1,4 +1,4 @@
-import { Episode } from '../types';
+import type { Episode } from '../types.ts';
 
 export interface ShowNotesTopic {
   id: string;

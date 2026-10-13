@@ -25,6 +25,7 @@ import {
   HardDriveDownload,
   Loader2
 } from 'lucide-react';
+import { ComedyPlayButton } from './ComedyPlayButton';
 import { useModalA11y } from '../hooks/useModalA11y';
 
 interface EpisodeModalProps {
@@ -206,8 +207,8 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
         {/* Action button bar */}
         <div className="px-4 sm:px-6 py-3 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 bg-[#141824]">
           <div className="flex items-center gap-2 flex-wrap">
-            <motion.button
-              whileTap={{ scale: 0.94 }}
+            <div
+              className="flex items-center gap-2.5 p-1.5 pr-4 rounded-xl bg-zinc-900/90 border border-zinc-700/80 hover:border-red-600/60 transition-colors shadow-sm cursor-pointer select-none group"
               onClick={() => {
                 if (currentEpisode?.id === episode.id) {
                   togglePlay();
@@ -215,20 +216,24 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ episode, onClose }) 
                   playEpisode(episode);
                 }
               }}
-              className="min-h-[48px] px-5 sm:px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors shadow-md shadow-red-950/50 cursor-pointer"
             >
-              {isCurrentPlaying ? (
-                <>
-                  <Pause className="w-4 h-4 fill-current" />
-                  <span>Pause</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
-                  <span>Play Episode</span>
-                </>
-              )}
-            </motion.button>
+              <ComedyPlayButton
+                size="sm"
+                isPlaying={isCurrentPlaying}
+                onClick={() => {
+                  if (currentEpisode?.id === episode.id) {
+                    togglePlay();
+                  } else {
+                    playEpisode(episode);
+                  }
+                }}
+                title={isCurrentPlaying ? 'Pause broadcast' : 'Play Episode'}
+                ariaLabel={isCurrentPlaying ? 'Pause broadcast' : 'Play Episode'}
+              />
+              <span className="font-bold text-xs sm:text-sm text-white group-hover:text-red-400 transition-colors">
+                {isCurrentPlaying ? 'Pause' : 'Play Episode'}
+              </span>
+            </div>
 
             <motion.button
               whileTap={{ scale: 0.94 }}

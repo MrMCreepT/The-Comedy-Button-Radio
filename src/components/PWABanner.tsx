@@ -12,15 +12,18 @@ export const PWABanner: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    // Check if dismissed previously within 3 days
-    const saved = localStorage.getItem(BANNER_STORAGE_KEY);
-    if (saved) {
-      const timestamp = parseInt(saved, 10);
-      if (Date.now() - timestamp < 1000 * 60 * 60 * 24 * 3) {
-        setDismissed(true);
-        return;
+    try {
+      // Check if dismissed previously within 3 days
+      const saved = localStorage.getItem(BANNER_STORAGE_KEY);
+      if (saved) {
+        const timestamp = parseInt(saved, 10);
+        if (Date.now() - timestamp < 1000 * 60 * 60 * 24 * 3) {
+          setDismissed(true);
+          return;
+        }
       }
-    }
+    } catch {}
+
     // Only show if not installed
     if (!isInstalled) {
       setDismissed(false);
@@ -33,7 +36,9 @@ export const PWABanner: React.FC = () => {
 
   const handleDismiss = () => {
     setDismissed(true);
-    localStorage.setItem(BANNER_STORAGE_KEY, Date.now().toString());
+    try {
+      localStorage.setItem(BANNER_STORAGE_KEY, Date.now().toString());
+    } catch {}
   };
 
   const handleInstallClick = async () => {

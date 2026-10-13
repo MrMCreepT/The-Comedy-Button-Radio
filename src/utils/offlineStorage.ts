@@ -343,6 +343,146 @@ export async function clearEpisodeResumePoint(episodeId: string): Promise<void> 
   } catch {}
 }
 
+export interface StorageQuotaInfo {
+  usageBytes: number;
+  quotaBytes: number;
+  percentageUsed: number;
+  episodesCount: number;
+  episodesSizeBytes: number;
+}
+
+export interface DownloadedEpisodeMetadata {
+  id: string;
+  guid: string;
+  title: string;
+  sizeBytes: number;
+  downloadedAt: number;
+}
+
+/**
+ * Get device storage usage, quota and cached podcast file statistics
+ */
+export async function getStorageQuotaInfo(): Promise<StorageQuotaInfo> {
+  let usageBytes = 0;
+  let quotaBytes = 0;
+  let percentageUsed = 0;
+
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      usageBytes = estimate.usage || 0;
+      quotaBytes = estimate.quota || 0;
+      if (quotaBytes > 0) {
+        percentageUsed = Math.min(100, Math.round((usageBytes / quotaBytes) * 100));
+      }
+    } catch (e) {
+      console.warn('Storage estimate error:', e);
+    }
+  }
+
+  // Calculate specific podcast storage in IndexedDB
+  let episodesCount = 0;
+  let episodesSizeBytes = 0;
+
+  try {
+    const db = await getDB();
+    const episodeList = await new Promise<DownloadedEpisodeMetadata[]>((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.openCursor();
+      const results: DownloadedEpisodeMetadata[] = [];
+
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const val = cursor.value;
+          results.push({
+            id: val.id,
+            guid: val.guid || val.id,
+            title: val.title || 'Episode',
+            sizeBytes: val.sizeBytes || (val.blob ? val.blob.size : 0),
+            downloadedAt: val.downloadedAt || Date.now()
+          });
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+
+      request.onerror = () => resolve([]);
+    });
+
+    episodesCount = episodeList.length;
+    episodesSizeBytes = episodeList.reduce((acc, curr) => acc + (curr.sizeBytes || 0), 0);
+    if (usageBytes === 0) {
+      usageBytes = episodesSizeBytes;
+    }
+  } catch (err) {
+    console.warn('Failed to calculate IndexedDB podcast size:', err);
+  }
+
+  return {
+    usageBytes,
+    quotaBytes,
+    percentageUsed,
+    episodesCount,
+    episodesSizeBytes
+  };
+}
+
+/**
+ * Get full list of downloaded episode metadata without pulling large Blobs into memory
+ */
+export async function getAllOfflineEpisodesDetails(): Promise<DownloadedEpisodeMetadata[]> {
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.openCursor();
+      const results: DownloadedEpisodeMetadata[] = [];
+
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const val = cursor.value;
+          results.push({
+            id: val.id,
+            guid: val.guid || val.id,
+            title: val.title || 'Episode',
+            sizeBytes: val.sizeBytes || (val.blob ? val.blob.size : 0),
+            downloadedAt: val.downloadedAt || Date.now()
+          });
+          cursor.continue();
+        } else {
+          // Sort newest downloads first
+          results.sort((a, b) => b.downloadedAt - a.downloadedAt);
+          resolve(results);
+        }
+      };
+
+      request.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Clear all downloaded episodes from offline IndexedDB storage in one tap
+ */
+export async function clearAllOfflineEpisodes(): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.clear();
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error || new Error('Failed to clear offline storage'));
+  });
+}
+
 /**
  * Format bytes into human readable string
  */

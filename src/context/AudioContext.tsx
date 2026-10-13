@@ -61,6 +61,10 @@ interface AudioContextType {
   isCastReceiverOpen: boolean;
   openCastReceiver: () => void;
   closeCastReceiver: () => void;
+  isStorageModalOpen: boolean;
+  openStorageModal: () => void;
+  closeStorageModal: () => void;
+  playlist: Episode[];
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -108,6 +112,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const currentEpisodeRef = useRef<Episode | null>(null);
   const playModeRef = useRef<'radio' | 'archive'>('radio');
   const playlistRef = useRef<Episode[]>([]);
+  const [playlist, setPlaylistState] = useState<Episode[]>([]);
   const isPlayingRef = useRef(false);
   const lastResumeSaveTimeRef = useRef<number>(0);
   const lastStatsRecordTimeRef = useRef<number>(0);
@@ -116,11 +121,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Modals state
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isCastReceiverOpen, setIsCastReceiverOpen] = useState(false);
+  const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
 
   const openStatsModal = useCallback(() => setIsStatsModalOpen(true), []);
   const closeStatsModal = useCallback(() => setIsStatsModalOpen(false), []);
   const openCastReceiver = useCallback(() => setIsCastReceiverOpen(true), []);
   const closeCastReceiver = useCallback(() => setIsCastReceiverOpen(false), []);
+  const openStorageModal = useCallback(() => setIsStorageModalOpen(true), []);
+  const closeStorageModal = useCallback(() => setIsStorageModalOpen(false), []);
 
   // Sync refs with state
   currentEpisodeRef.current = currentEpisode;
@@ -175,6 +183,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setPlaylist = useCallback((episodes: Episode[]) => {
     playlistRef.current = episodes;
+    setPlaylistState(episodes);
   }, []);
 
   const setPlayMode = useCallback((mode: 'radio' | 'archive') => {
@@ -876,6 +885,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isCastReceiverOpen,
         openCastReceiver,
         closeCastReceiver,
+        isStorageModalOpen,
+        openStorageModal,
+        closeStorageModal,
+        playlist,
       }}
     >
       {children}

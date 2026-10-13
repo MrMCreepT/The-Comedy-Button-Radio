@@ -29,10 +29,13 @@ import {
   Moon,
   Sparkles,
   Tv,
-  BarChart3
+  BarChart3,
+  HardDrive
 } from 'lucide-react';
 import { SleepTimerPopover } from './SleepTimerPopover';
 import { PlaybackSpeedPopover } from './PlaybackSpeedPopover';
+import { WaveformVisualizer } from './WaveformVisualizer';
+import { ComedyPlayButton } from './ComedyPlayButton';
 
 export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> = ({ onOpenEpisode }) => {
   const {
@@ -64,6 +67,7 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
     toggleVoiceBoost,
     openCastReceiver,
     openStatsModal,
+    openStorageModal,
   } = useAudio();
 
   const [isDownloadingCurrent, setIsDownloadingCurrent] = useState(false);
@@ -212,6 +216,19 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
                 <p className="text-xs text-zinc-300">The Comedy Button Podcast</p>
               </div>
 
+              {/* Dynamic 60fps Audio Waveform Visualizer */}
+              <div className="px-2">
+                <div className="h-11 w-full px-2 py-1 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-center">
+                  <WaveformVisualizer
+                    isPlaying={isPlaying}
+                    currentTime={currentTime}
+                    duration={duration}
+                    barCount={36}
+                    className="h-9 w-full"
+                  />
+                </div>
+              </div>
+
               {/* Scrubber Progress Bar & Timestamps (Accessible role="slider") */}
               <div className="space-y-1.5 px-2">
                 <div className="relative flex items-center">
@@ -269,40 +286,14 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
                   </span>
                 </motion.button>
 
-                {/* Main Play/Pause Button (64px Bounding Box with aria-pressed) */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.88 }}
+                {/* The Iconic 3D Comedy Button Play/Pause Control */}
+                <ComedyPlayButton
+                  size="lg"
+                  isPlaying={isPlaying}
                   onClick={togglePlay}
-                  aria-pressed={isPlaying}
-                  className="relative overflow-hidden w-16 h-16 min-w-[64px] min-h-[64px] rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-colors shadow-xl shadow-red-950/60 cursor-pointer"
-                  title={isPlaying ? 'Pause' : 'Play'}
-                  aria-label={isPlaying ? 'Pause' : 'Play'}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {isPlaying ? (
-                      <motion.div
-                        key="pause"
-                        initial={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        exit={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Pause className="w-7 h-7 fill-current" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="play"
-                        initial={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        exit={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Play className="w-7 h-7 fill-current ml-1" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
+                  title={isPlaying ? 'Pause broadcast' : 'Press the Comedy Button to Play'}
+                  ariaLabel={isPlaying ? 'Pause broadcast' : 'Play broadcast'}
+                />
 
                 {/* Skip +30s with Interval Indicator (48px Touch Target) */}
                 <motion.button
@@ -528,6 +519,21 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
                     </>
                   )}
                 </motion.button>
+
+                {/* Offline Storage / Downloads Manager Button (≥ 48px Target) */}
+                <button
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setIsMobileExpanded(false);
+                    openStorageModal();
+                  }}
+                  className="min-h-[48px] min-w-[48px] px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700/80 text-zinc-200 hover:text-white flex items-center justify-center gap-1.5 font-semibold cursor-pointer active:bg-zinc-800"
+                  title="Manage offline storage & downloads"
+                  aria-label="Manage offline storage and downloads"
+                >
+                  <HardDrive className="w-4 h-4 text-emerald-400" />
+                  <span>Cache</span>
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -629,39 +635,14 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
               </span>
             </motion.button>
 
-            {/* Play / Pause (48px Touch Target with aria-pressed) */}
-            <motion.button
-              whileTap={{ scale: 0.88 }}
+            {/* Play / Pause The Comedy Button */}
+            <ComedyPlayButton
+              size="sm"
+              isPlaying={isPlaying}
               onClick={togglePlay}
-              aria-pressed={isPlaying}
-              className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-red-600 active:bg-red-500 text-white flex items-center justify-center cursor-pointer shadow-md shadow-red-950/50"
               title={isPlaying ? 'Pause' : 'Play'}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {isPlaying ? (
-                  <motion.div
-                    key="pause"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <Pause className="w-5 h-5 fill-current" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="play"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <Play className="w-5 h-5 fill-current ml-0.5" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+              ariaLabel={isPlaying ? 'Pause' : 'Play'}
+            />
 
             {/* Expand Sheet (48px Touch Target) */}
             <motion.button
@@ -686,20 +667,13 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
           {isMinimized ? (
             <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
+                <ComedyPlayButton
+                  size="sm"
+                  isPlaying={isPlaying}
                   onClick={togglePlay}
-                  aria-pressed={isPlaying}
-                  className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer shadow-md shadow-red-950/40"
                   title={isPlaying ? 'Pause' : 'Play'}
-                  aria-label={isPlaying ? 'Pause' : 'Play'}
-                >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4 fill-current" />
-                  ) : (
-                    <Play className="w-4 h-4 fill-current ml-0.5" />
-                  )}
-                </motion.button>
+                  ariaLabel={isPlaying ? 'Pause' : 'Play'}
+                />
                 <div
                   className="min-w-0 cursor-pointer"
                   onClick={() => onOpenEpisode?.(currentEpisode)}
@@ -815,40 +789,14 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
                       </span>
                     </motion.button>
 
-                    {/* Primary Play/Pause Button (52px Box with aria-pressed) */}
-                    <motion.button
-                      whileHover={{ scale: 1.06 }}
-                      whileTap={{ scale: 0.88 }}
+                    {/* Primary Play/Pause: The Iconic Comedy Button */}
+                    <ComedyPlayButton
+                      size="md"
+                      isPlaying={isPlaying}
                       onClick={togglePlay}
-                      aria-pressed={isPlaying}
-                      className="relative overflow-hidden w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-colors shadow-lg shadow-red-950/60 cursor-pointer group"
-                      title={isPlaying ? 'Pause' : 'Play'}
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                    >
-                      <AnimatePresence mode="wait" initial={false}>
-                        {isPlaying ? (
-                          <motion.div
-                            key="pause"
-                            initial={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                            exit={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <Pause className="w-5 h-5 fill-current" />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="play"
-                            initial={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                            exit={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <Play className="w-5 h-5 fill-current ml-0.5" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.button>
+                      title={isPlaying ? 'Pause broadcast' : 'Press the Comedy Button to Play'}
+                      ariaLabel={isPlaying ? 'Pause broadcast' : 'Play broadcast'}
+                    />
 
                     {/* Skip +30s with explicit "30" label inside arrow (48px Touch Target) */}
                     <motion.button

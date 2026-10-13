@@ -7,12 +7,13 @@ import { spawn } from "child_process";
 import { XMLParser } from "fast-xml-parser";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
-import { episodeMatchesTopic } from "./src/utils/showNotesFilter";
+import { episodeMatchesTopic } from "./src/utils/showNotesFilter.ts";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.raw({ type: ["audio/*", "application/octet-stream"], limit: "50mb" }));
 
 // Helper for atomic file persistence to prevent file corruption and race conditions
 function writeJsonAtomic(filePath: string, data: any) {
@@ -1162,11 +1163,80 @@ app.get("/api/audio-proxy", async (req, res) => {
   }
 });
 
+// Theme tune audio upload endpoint
+app.post("/api/theme-audio", (req, res) => {
+  try {
+    const publicAudioDir = path.join(process.cwd(), "public", "audio");
+    const distAudioDir = path.join(process.cwd(), "dist", "audio");
+
+    if (!fs.existsSync(publicAudioDir)) {
+      fs.mkdirSync(publicAudioDir, { recursive: true });
+    }
+    if (!fs.existsSync(distAudioDir)) {
+      fs.mkdirSync(distAudioDir, { recursive: true });
+    }
+
+    const publicTarget = path.join(publicAudioDir, "theme-tune.mp3");
+    const distTarget = path.join(distAudioDir, "theme-tune.mp3");
+
+    let buffer: Buffer;
+
+    if (Buffer.isBuffer(req.body)) {
+      buffer = req.body;
+    } else if (req.body && req.body.audioBase64) {
+      const cleanBase64 = req.body.audioBase64.replace(/^data:audio\/[a-z0-9]+;base64,/, "");
+      buffer = Buffer.from(cleanBase64, "base64");
+    } else {
+      return res.status(400).json({ error: "Missing audio binary or audioBase64 payload" });
+    }
+
+    fs.writeFileSync(publicTarget, buffer);
+    if (fs.existsSync(distAudioDir)) {
+      fs.writeFileSync(distTarget, buffer);
+    }
+
+    console.log(`[TCB] Theme audio updated successfully: ${buffer.length} bytes`);
+    return res.json({
+      success: true,
+      message: "Theme audio updated successfully",
+      size: buffer.length,
+      url: `/audio/theme-tune.mp3?t=${Date.now()}`
+    });
+  } catch (err: any) {
+    console.error("Error saving theme audio:", err);
+    return res.status(500).json({ error: "Failed to save theme audio", details: err.message });
+  }
+});
+
+// Explicit route to serve theme tune audio with no-cache and range support
+app.get("/audio/theme-tune.mp3", (req, res) => {
+  const filePath = path.join(process.cwd(), "public", "audio", "theme-tune.mp3");
+  if (fs.existsSync(filePath)) {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Content-Type", "audio/mpeg");
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send("Theme audio not found");
+});
+
+app.get("/audio/theme-cover.jpg", (req, res) => {
+  const filePath = path.join(process.cwd(), "public", "audio", "theme-cover.jpg");
+  if (fs.existsSync(filePath)) {
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Content-Type", "image/jpeg");
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send("Cover not found");
+});
+
 async function start() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, allowedHosts: true },
       appType: "spa",
     });
     app.use(vite.middlewares);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ExternalLink, Radio, Heart } from 'lucide-react';
+import { Radio } from 'lucide-react';
 import { ComedyButtonLogo } from './ComedyButtonLogo';
 import { PWAInstallButton } from './PWAInstallButton';
 import { OFFICIAL_LINKS } from '../data/links';
@@ -44,29 +44,11 @@ export const Footer: React.FC = () => {
         {/* Bottom Credits & Legal */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-500">
           <p>
-            The Comedy Button &copy; {new Date().getFullYear()}. Audio content hosted via Libsyn CDN.
+            The Comedy Button &copy; {new Date().getFullYear()}. Fan-built station streaming archival episodes via Libsyn CDN.
           </p>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://store.comedybutton.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-amber-400/90 hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold"
-            >
-              <span>Get Official T-Shirts</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-            <span>&bull;</span>
-            <a
-              href="https://www.patreon.com/comedybutton"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-rose-400/90 hover:text-rose-300 transition-colors flex items-center gap-1 font-semibold"
-            >
-              <span>Support on Patreon</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+          <p className="text-zinc-600">
+            All original audio &copy; The Comedy Button podcast.
+          </p>
         </div>
       </div>
     </footer>

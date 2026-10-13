@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AudioProvider, useAudio } from './context/AudioContext';
-import { CastProvider } from './context/CastContext';
+import { CastProvider, useCast } from './context/CastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Episode, PodcastMeta } from './types';
 import { getPodcastInfo, getEpisodes } from './services/api';
 import { pickTrueRandom } from './utils/trueRandom';
@@ -26,6 +27,12 @@ const ListeningStatsModal = lazy(() =>
 const CastReceiverScreen = lazy(() =>
   import('./components/CastReceiverScreen').then((m) => ({ default: m.CastReceiverScreen }))
 );
+const StorageManagerModal = lazy(() =>
+  import('./components/StorageManagerModal').then((m) => ({ default: m.StorageManagerModal }))
+);
+const ThemeIntroModal = lazy(() =>
+  import('./components/ThemeIntroModal').then((m) => ({ default: m.ThemeIntroModal }))
+);
 
 function AppContent() {
   const {
@@ -35,8 +42,12 @@ function AppContent() {
     isStatsModalOpen,
     closeStatsModal,
     isCastReceiverOpen,
-    closeCastReceiver
+    closeCastReceiver,
+    isStorageModalOpen,
+    closeStorageModal
   } = useAudio();
+
+  const { isCastModalOpen } = useCast();
 
   const [activeTab, setActiveTab] = useState<'stream' | 'archive'>('stream');
   const [meta, setMeta] = useState<PodcastMeta | null>(null);
@@ -45,6 +56,30 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
+  const [isThemeIntroOpen, setIsThemeIntroOpen] = useState<boolean>(() => {
+    try {
+      const skipIntro = localStorage.getItem('cb_skip_theme_intro') === 'true';
+      const sessionSeen = sessionStorage.getItem('cb_intro_seen') === 'true';
+      return !skipIntro && !sessionSeen;
+    } catch {
+      return false;
+    }
+  });
+
+  const handleCloseThemeIntro = () => {
+    try {
+      sessionStorage.setItem('cb_intro_seen', 'true');
+    } catch {}
+    setIsThemeIntroOpen(false);
+  };
+
+  const handleEnterBroadcastFromIntro = () => {
+    try {
+      sessionStorage.setItem('cb_intro_seen', 'true');
+    } catch {}
+    setIsThemeIntroOpen(false);
+    setActiveTab('stream');
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -84,6 +119,7 @@ function AppContent() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onPlayTrueRandom={handlePlayTrueRandom}
+        onOpenThemeIntro={() => setIsThemeIntroOpen(true)}
         totalEpisodes={episodes.length}
       />
 
@@ -111,6 +147,7 @@ function AppContent() {
             {activeTab === 'stream' && (
               <RadioStreamStation
                 onOpenEpisode={(ep) => setSelectedEpisode(ep)}
+                onOpenThemeIntro={() => setIsThemeIntroOpen(true)}
               />
             )}
 
@@ -133,29 +170,58 @@ function AppContent() {
       {/* Persistent Bottom Audio Player Bar */}
       <AudioPlayer onOpenEpisode={(ep) => setSelectedEpisode(ep)} />
 
-      {/* Code-split Modal Dialogues */}
-      <Suspense fallback={null}>
-        {/* Show Notes & Episode Modal */}
-        <EpisodeModal
-          episode={selectedEpisode}
-          onClose={() => setSelectedEpisode(null)}
-        />
+      {/* Code-split Modal Dialogues - Rendered on-demand to guarantee near-instant initial boot */}
+      {selectedEpisode && (
+        <Suspense fallback={null}>
+          <EpisodeModal
+            episode={selectedEpisode}
+            onClose={() => setSelectedEpisode(null)}
+          />
+        </Suspense>
+      )}
 
-        {/* Cast & Audio Output Device Modal */}
-        <CastModal />
+      {isCastModalOpen && (
+        <Suspense fallback={null}>
+          <CastModal />
+        </Suspense>
+      )}
 
-        {/* Listening Statistics & Year-in-Review Highlights Modal */}
-        <ListeningStatsModal
-          isOpen={isStatsModalOpen}
-          onClose={closeStatsModal}
-        />
+      {isStatsModalOpen && (
+        <Suspense fallback={null}>
+          <ListeningStatsModal
+            isOpen={isStatsModalOpen}
+            onClose={closeStatsModal}
+          />
+        </Suspense>
+      )}
 
-        {/* Dedicated Cast / TV Receiver Screen with Synchronized Lyrics & Vinyl Disc */}
-        <CastReceiverScreen
-          isOpen={isCastReceiverOpen}
-          onClose={closeCastReceiver}
-        />
-      </Suspense>
+      {isCastReceiverOpen && (
+        <Suspense fallback={null}>
+          <CastReceiverScreen
+            isOpen={isCastReceiverOpen}
+            onClose={closeCastReceiver}
+          />
+        </Suspense>
+      )}
+
+      {isStorageModalOpen && (
+        <Suspense fallback={null}>
+          <StorageManagerModal
+            isOpen={isStorageModalOpen}
+            onClose={closeStorageModal}
+          />
+        </Suspense>
+      )}
+
+      {isThemeIntroOpen && (
+        <Suspense fallback={null}>
+          <ThemeIntroModal
+            isOpen={isThemeIntroOpen}
+            onClose={handleCloseThemeIntro}
+            onEnterBroadcast={handleEnterBroadcastFromIntro}
+          />
+        </Suspense>
+      )}
 
       {/* Ambient Mobile PWA Install Banner */}
       <PWABanner />
@@ -166,11 +232,13 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary fallbackTitle="The Comedy Button Player" fallbackMessage="An unexpected issue occurred. Click reload to refresh.">
-      <AudioProvider>
-        <CastProvider>
-          <AppContent />
-        </CastProvider>
-      </AudioProvider>
+      <ThemeProvider>
+        <AudioProvider>
+          <CastProvider>
+            <AppContent />
+          </CastProvider>
+        </AudioProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

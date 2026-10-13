@@ -93,3 +93,37 @@
   animation: shimmer-slide 1.4s infinite;
 }
 
+/* ========================================================================= */
+/* OLED Pure Black Theme Mode (#000000 True Black for battery & contrast)    */
+/* ========================================================================= */
+html.theme-oled,
+html.theme-oled body,
+html.theme-oled .bg-\[\#0c0e14\],
+html.theme-oled .bg-\[\#0e111a\]\/95,
+html.theme-oled .bg-\[\#121520\] {
+  background-color: #000000 !important;
+}
+
+html.theme-oled .bg-\[\#151926\],
+html.theme-oled .bg-zinc-900\/90,
+html.theme-oled .bg-zinc-900 {
+  background-color: #0c0c0c !important;
+}
+
+html.theme-oled .bg-zinc-800,
+html.theme-oled .bg-zinc-800\/90,
+html.theme-oled .bg-zinc-800\/80 {
+  background-color: #141414 !important;
+}
+
+html.theme-oled .border-zinc-800,
+html.theme-oled .border-zinc-800\/80,
+html.theme-oled .border-zinc-700\/80,
+html.theme-oled .border-zinc-700\/70 {
+  border-color: #242424 !important;
+}
+
+html.theme-oled .bg-gradient-to-t.from-\[\#0c0e14\] {
+  --tw-gradient-from: #000000 !important;
+}
+
