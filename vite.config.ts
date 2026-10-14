@@ -4,10 +4,11 @@ import path from 'path';
 import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   return {
-    // Root base path for AI Studio preview & standard hosting; configurable via VITE_BASE_URL for GitHub Pages
-    base: process.env.VITE_BASE_URL || '/',
+    // In dev mode (command === 'serve'), Vite requires '/' for proper module resolution and HMR.
+    // In build mode, './' ensures GitHub Pages subpaths and custom static hosts work seamlessly.
+    base: command === 'serve' ? '/' : (process.env.VITE_BASE_URL || './'),
     plugins: [
       react(),
       tailwindcss(),
@@ -23,7 +24,7 @@ export default defineConfig(() => {
           'assets/cover.jpg',
         ],
         manifest: {
-          id: '/',
+          id: './',
           name: 'The Comedy Button',
           short_name: 'ComedyButton',
           description: 'The 24/7 live radio broadcast and complete episode archive for The Comedy Button podcast.',

@@ -27,8 +27,13 @@ export function getArtworkUrl(preferredUrl?: string | null): string {
       return preferredUrl;
     }
 
-    const base = import.meta.env.BASE_URL || '/';
-    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    let cleanBase = '/';
+    try {
+      const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
+      cleanBase = base.endsWith('/') ? base : `${base}/`;
+    } catch {
+      cleanBase = '/';
+    }
     const cleanPath = preferredUrl.startsWith('/') ? preferredUrl.slice(1) : preferredUrl;
     return `${cleanBase}${cleanPath}`;
   }

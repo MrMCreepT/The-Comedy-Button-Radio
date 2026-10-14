@@ -55,15 +55,8 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  // Show intro animation on every open unless the user explicitly turned it off in settings
-  const [isThemeIntroOpen, setIsThemeIntroOpen] = useState<boolean>(() => {
-    try {
-      const skipIntro = localStorage.getItem('cb_skip_theme_intro') === 'true';
-      return !skipIntro;
-    } catch {
-      return false;
-    }
-  });
+  // Theme intro modal state - accessible anytime via the Theme Intro button in the navigation or station
+  const [isThemeIntroOpen, setIsThemeIntroOpen] = useState<boolean>(false);
 
   const handleCloseThemeIntro = (autoStartRadio = false) => {
     setIsThemeIntroOpen(false);

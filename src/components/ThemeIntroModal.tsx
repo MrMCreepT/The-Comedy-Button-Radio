@@ -135,6 +135,33 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
     }
   });
 
+  const [autoStartRadio, setAutoStartRadio] = useState(() => {
+    try {
+      const stored = localStorage.getItem('cb_autostart_radio_after_intro');
+      return stored !== null ? stored === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const getThemeAudioUrl = () => {
+    try {
+      const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || './';
+      const cleanBase = base.endsWith('/') ? base : `${base}/`;
+      return `${cleanBase}audio/theme-tune.mp3`;
+    } catch {
+      return './audio/theme-tune.mp3';
+    }
+  };
+
+  const handleToggleAutoStartRadio = () => {
+    const nextVal = !autoStartRadio;
+    setAutoStartRadio(nextVal);
+    try {
+      localStorage.setItem('cb_autostart_radio_after_intro', String(nextVal));
+    } catch {}
+  };
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
@@ -175,7 +202,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
         setCurrentTime(t);
         // Seamlessly transfer into 24/7 radio as soon as 34s is reached
         if (t >= 33.95) {
-          handleEnterApp();
+          handleEnterApp(autoStartRadio);
           return;
         }
       }
@@ -188,7 +215,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, autoStartRadio]);
 
   // Rotate lore cards during Phase 3 (18.0s - 26.0s)
   useEffect(() => {
@@ -218,14 +245,14 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
     onClose();
   };
 
-  const handleEnterApp = () => {
+  const handleEnterApp = (forceRadio = true) => {
     triggerHaptic(15);
     if (audioRef.current) {
       audioRef.current.pause();
     }
     setIsPlaying(false);
     onClose();
-    if (onEnterBroadcast) {
+    if ((forceRadio || autoStartRadio) && onEnterBroadcast) {
       onEnterBroadcast();
     }
   };
@@ -350,7 +377,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
       localStorage.removeItem('cb_custom_audio_name');
     } catch {}
     if (audioRef.current) {
-      audioRef.current.src = `/audio/theme-tune.mp3?t=${Date.now()}`;
+      audioRef.current.src = `${getThemeAudioUrl()}?t=${Date.now()}`;
       audioRef.current.currentTime = 0;
       audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
     }
@@ -436,9 +463,9 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
         {/* Hidden Audio Element */}
         <audio
           ref={audioRef}
-          src={`/audio/theme-tune.mp3?v=${audioVersion}`}
+          src={`${getThemeAudioUrl()}?v=${audioVersion}`}
           preload="auto"
-          onEnded={handleEnterApp}
+          onEnded={() => handleEnterApp(autoStartRadio)}
           onLoadedMetadata={(e) => {
             const dur = (e.target as HTMLAudioElement).duration;
             if (dur && !isNaN(dur) && isFinite(dur)) {
@@ -624,7 +651,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
             <motion.button
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              onClick={handleEnterApp}
+              onClick={() => handleEnterApp(true)}
               className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-red-950/60 cursor-pointer"
             >
               <span>Enter Radio</span>
@@ -903,7 +930,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={handleEnterApp}
+                    onClick={() => handleEnterApp(true)}
                     className="w-full px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-amber-600 to-red-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl shadow-red-950/80 cursor-pointer"
                   >
                     <Radio className="w-5 h-5 animate-pulse" />
@@ -986,21 +1013,33 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
             </div>
           </div>
 
-          {/* Footer Controls: Toggle Auto-Play on Startup */}
+          {/* Footer Controls: Toggle Auto-Play on Startup & Auto-Start Radio */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400 pt-2 border-t border-zinc-800/80">
-            <label className="flex items-center gap-2 cursor-pointer hover:text-zinc-200 transition-colors select-none">
-              <input
-                type="checkbox"
-                checked={dontShowAgain}
-                onChange={handleToggleDontShow}
-                className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
-              />
-              <span>Don&apos;t show intro on startup</span>
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer hover:text-zinc-200 transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={handleToggleDontShow}
+                  className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-red-600 focus:ring-red-500 focus:ring-offset-0 cursor-pointer"
+                />
+                <span>Don&apos;t show intro on startup</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer hover:text-zinc-200 transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={autoStartRadio}
+                  onChange={handleToggleAutoStartRadio}
+                  className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer"
+                />
+                <span>Auto-start 24/7 Radio when intro finishes</span>
+              </label>
+            </div>
 
             <div className="flex items-center gap-4">
               <button
-                onClick={handleEnterApp}
+                onClick={() => handleEnterApp(true)}
                 className="text-amber-400 font-bold hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1"
               >
                 <span>Skip straight to 24/7 Radio</span>

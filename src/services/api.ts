@@ -11,10 +11,14 @@ let cachedMetaInMemory: PodcastMeta | null = null;
 
 // Helper to resolve static fallback URL taking base URL into account
 function getStaticUrl(relPath: string): string {
-  const base = import.meta.env.BASE_URL || '/';
-  const cleanBase = base.endsWith('/') ? base : `${base}/`;
-  const cleanPath = relPath.startsWith('/') ? relPath.slice(1) : relPath;
-  return `${cleanBase}${cleanPath}`;
+  try {
+    const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
+    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    const cleanPath = relPath.startsWith('/') ? relPath.slice(1) : relPath;
+    return `${cleanBase}${cleanPath}`;
+  } catch {
+    return relPath.startsWith('/') ? relPath : `/${relPath}`;
+  }
 }
 
 export async function getPodcastInfo(): Promise<PodcastMeta> {
@@ -22,10 +26,11 @@ export async function getPodcastInfo(): Promise<PodcastMeta> {
     return cachedMetaInMemory;
   }
 
-  // 1. Try server API endpoint
+  // 1. Try server API endpoint (if running with backend Express server)
   try {
     const res = await fetch('/api/podcast/info');
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
       cachedMetaInMemory = data;
       return data;
@@ -35,11 +40,30 @@ export async function getPodcastInfo(): Promise<PodcastMeta> {
   }
 
   // 2. Static JSON fallback
-  const staticRes = await fetch(getStaticUrl('data/info.json'));
-  if (!staticRes.ok) throw new Error('Failed to fetch podcast info');
-  const staticData = await staticRes.json();
-  cachedMetaInMemory = staticData;
-  return staticData;
+  try {
+    const staticRes = await fetch(getStaticUrl('data/info.json'));
+    if (staticRes.ok) {
+      const staticData = await staticRes.json();
+      cachedMetaInMemory = staticData;
+      return staticData;
+    }
+  } catch (err) {
+    console.warn('Failed to load static info.json:', err);
+  }
+
+  // 3. Built-in fallback metadata so UI never breaks
+  const fallbackMeta: PodcastMeta = {
+    title: 'The Comedy Button',
+    description: 'The 24/7 live radio broadcast and complete episode archive for The Comedy Button podcast.',
+    link: 'https://thecomedybutton.com',
+    imageUrl: 'https://static.libsyn.com/p/assets/4/b/9/9/4b995a114aac0a5b/ComedyButton-2015-iTunes-icon-1400x1400.jpg',
+    author: 'The Comedy Button',
+    totalEpisodes: 560,
+    lastBuildDate: new Date().toISOString(),
+    hosts: ['Anthony Gallegos', 'Brian Altano', 'Scott Bromley', 'Ryan Scott', 'Max Scoville']
+  };
+  cachedMetaInMemory = fallbackMeta;
+  return fallbackMeta;
 }
 
 export async function getEpisodes(
@@ -61,7 +85,8 @@ export async function getEpisodes(
     if (guest) params.set('guest', guest);
 
     const res = await fetch(`/api/podcast/episodes?${params.toString()}`);
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
       cachedEpisodesInMemory = data.episodes;
       return data;
@@ -148,7 +173,8 @@ export async function getStreamTimeline(): Promise<LiveTimelineStatus> {
   // 1. Try server timeline first
   try {
     const res = await fetch('/api/stream/timeline');
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       return res.json();
     }
   } catch {

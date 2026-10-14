@@ -1232,6 +1232,23 @@ app.get("/audio/theme-cover.jpg", (req, res) => {
   return res.status(404).send("Cover not found");
 });
 
+// Service Worker management: in dev/preview, return a quiet self-unregistering script without reloading clients
+app.get(["/sw.js", "/service-worker.js"], (req, res) => {
+  const isProd = process.env.NODE_ENV === "production";
+  const distSw = path.join(process.cwd(), "dist", "sw.js");
+  if (isProd && fs.existsSync(distSw)) {
+    res.setHeader("Content-Type", "application/javascript");
+    res.setHeader("Cache-Control", "no-cache");
+    return res.sendFile(distSw);
+  }
+  res.setHeader("Content-Type", "application/javascript");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  return res.send(`
+    self.addEventListener('install', () => self.skipWaiting());
+    self.addEventListener('activate', () => self.registration.unregister());
+  `);
+});
+
 async function start() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
@@ -1242,10 +1259,19 @@ async function start() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+    if (fs.existsSync(distPath) && fs.existsSync(path.join(distPath, "index.html"))) {
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    } else {
+      console.log("[TCB Server] dist/index.html not found, falling back to Vite middleware");
+      const vite = await createViteServer({
+        server: { middlewareMode: true, allowedHosts: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    }
   }
 
   app.listen(PORT, "0.0.0.0", () => {
