@@ -65,6 +65,7 @@ interface AudioContextType {
   openStorageModal: () => void;
   closeStorageModal: () => void;
   playlist: Episode[];
+  startLiveRadio: () => Promise<void>;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -669,6 +670,21 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const startLiveRadio = useCallback(async () => {
+    try {
+      setPlayModeState('radio');
+      playModeRef.current = 'radio';
+      const { getStreamTimeline } = await import('../services/api');
+      const timeline = await getStreamTimeline();
+      if (timeline?.onAir?.episode) {
+        const offset = Math.max(0, timeline.onAir.currentOffsetSeconds || 0);
+        await playEpisode(timeline.onAir.episode, offset, 'radio');
+      }
+    } catch (err) {
+      console.error('[TCB] Failed to start live radio:', err);
+    }
+  }, []);
+
   const togglePlay = () => {
     if (!audioRef.current) return;
     triggerHaptic(10);
@@ -889,6 +905,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         openStorageModal,
         closeStorageModal,
         playlist,
+        startLiveRadio,
       }}
     >
       {children}

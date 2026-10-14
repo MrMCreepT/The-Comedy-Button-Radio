@@ -30,15 +30,14 @@ const CastReceiverScreen = lazy(() =>
 const StorageManagerModal = lazy(() =>
   import('./components/StorageManagerModal').then((m) => ({ default: m.StorageManagerModal }))
 );
-const ThemeIntroModal = lazy(() =>
-  import('./components/ThemeIntroModal').then((m) => ({ default: m.ThemeIntroModal }))
-);
+import { ThemeIntroModal } from './components/ThemeIntroModal';
 
 function AppContent() {
   const {
     playEpisode,
     currentEpisode,
     setPlaylist,
+    startLiveRadio,
     isStatsModalOpen,
     closeStatsModal,
     isCastReceiverOpen,
@@ -56,29 +55,27 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
+  // Show intro animation on every open unless the user explicitly turned it off in settings
   const [isThemeIntroOpen, setIsThemeIntroOpen] = useState<boolean>(() => {
     try {
       const skipIntro = localStorage.getItem('cb_skip_theme_intro') === 'true';
-      const sessionSeen = sessionStorage.getItem('cb_intro_seen') === 'true';
-      return !skipIntro && !sessionSeen;
+      return !skipIntro;
     } catch {
       return false;
     }
   });
 
-  const handleCloseThemeIntro = () => {
-    try {
-      sessionStorage.setItem('cb_intro_seen', 'true');
-    } catch {}
+  const handleCloseThemeIntro = (autoStartRadio = false) => {
     setIsThemeIntroOpen(false);
+    if (autoStartRadio) {
+      startLiveRadio();
+    }
   };
 
   const handleEnterBroadcastFromIntro = () => {
-    try {
-      sessionStorage.setItem('cb_intro_seen', 'true');
-    } catch {}
     setIsThemeIntroOpen(false);
     setActiveTab('stream');
+    startLiveRadio();
   };
 
   const loadData = async () => {
@@ -214,13 +211,11 @@ function AppContent() {
       )}
 
       {isThemeIntroOpen && (
-        <Suspense fallback={null}>
-          <ThemeIntroModal
-            isOpen={isThemeIntroOpen}
-            onClose={handleCloseThemeIntro}
-            onEnterBroadcast={handleEnterBroadcastFromIntro}
-          />
-        </Suspense>
+        <ThemeIntroModal
+          isOpen={isThemeIntroOpen}
+          onClose={() => handleCloseThemeIntro(false)}
+          onEnterBroadcast={handleEnterBroadcastFromIntro}
+        />
       )}
 
       {/* Ambient Mobile PWA Install Banner */}

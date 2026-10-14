@@ -108,7 +108,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(41.14);
+  const [duration, setDuration] = useState(34);
   const [isMuted, setIsMuted] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [activeLoreIndex, setActiveLoreIndex] = useState(0);
@@ -171,7 +171,13 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
 
     const tick = () => {
       if (audioRef.current) {
-        setCurrentTime(audioRef.current.currentTime);
+        const t = audioRef.current.currentTime;
+        setCurrentTime(t);
+        // Seamlessly transfer into 24/7 radio as soon as 34s is reached
+        if (t >= 33.95) {
+          handleEnterApp();
+          return;
+        }
       }
       animFrameRef.current = requestAnimationFrame(tick);
     };
@@ -184,10 +190,10 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
     };
   }, [isPlaying]);
 
-  // Rotate lore cards every few seconds during Phase 3
+  // Rotate lore cards during Phase 3 (18.0s - 26.0s)
   useEffect(() => {
-    if (currentTime >= 18 && currentTime < 32) {
-      const idx = Math.floor((currentTime - 18) / 3.5) % 4;
+    if (currentTime >= 18 && currentTime < 26) {
+      const idx = Math.floor((currentTime - 18) / 2) % 4;
       setActiveLoreIndex(idx);
     }
   }, [currentTime]);
@@ -278,7 +284,7 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    handleSeek(ratio * (duration || 41.5));
+    handleSeek(ratio * (duration || 34.0));
   };
 
   const handleToggleDontShow = () => {
@@ -357,20 +363,20 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
     (h) => currentTime >= h.startTime && currentTime <= h.endTime
   );
 
-  // Phases of the song:
+  // Phases of the song (cut to 34 seconds):
   // Phase 1 (0.0s - 10.4s): Host roll call
   // Phase 2 (10.4s - 18.0s): Title drop & heavy beat drop / button slam
-  // Phase 3 (18.0s - 32.0s): Skate punk guitar riff & podcast lore cassette
-  // Phase 4 (32.0s - 40.0s): Guitar solo & host squad lineup
-  // Phase 5 (40.0s - 41.5s): Big finale chord & enter broadcast CTA
+  // Phase 3 (18.0s - 26.0s): Skate punk guitar riff & podcast lore cassette
+  // Phase 4 (26.0s - 32.0s): Guitar solo & host squad lineup
+  // Phase 5 (32.0s - 34.0s): Finale chord & seamless transition straight into 24/7 radio
   const isHostIntroPhase = currentTime < 10.4;
   const isTitleDropPhase = currentTime >= 10.4 && currentTime < 18.0;
-  const isRiffPhase = currentTime >= 18.0 && currentTime < 32.0;
-  const isSoloPhase = currentTime >= 32.0 && currentTime < 40.0;
-  const isFinalePhase = currentTime >= 40.0;
+  const isRiffPhase = currentTime >= 18.0 && currentTime < 26.0;
+  const isSoloPhase = currentTime >= 26.0 && currentTime < 32.0;
+  const isFinalePhase = currentTime >= 32.0;
   const isRocking = currentTime >= 10.4;
 
-  const progressPercent = Math.min(100, (currentTime / (duration || 41.5)) * 100);
+  const progressPercent = Math.min(100, (currentTime / (duration || 34.0)) * 100);
 
   const LORE_ITEMS = [
     {
@@ -432,11 +438,11 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
           ref={audioRef}
           src={`/audio/theme-tune.mp3?v=${audioVersion}`}
           preload="auto"
-          onEnded={handleDismiss}
+          onEnded={handleEnterApp}
           onLoadedMetadata={(e) => {
             const dur = (e.target as HTMLAudioElement).duration;
             if (dur && !isNaN(dur) && isFinite(dur)) {
-              setDuration(dur);
+              setDuration(Math.min(dur, 34.0));
             }
           }}
         />
@@ -950,14 +956,14 @@ export const ThemeIntroModal: React.FC<ThemeIntroModalProps> = ({
               {HOST_TIMELINE.map((h) => (
                 <div
                   key={h.id}
-                  style={{ left: `${(h.startTime / (duration || 41.5)) * 100}%` }}
+                  style={{ left: `${(h.startTime / (duration || 34.0)) * 100}%` }}
                   className="absolute top-0 bottom-0 w-0.5 bg-white/40 pointer-events-none"
                   title={h.name}
                 />
               ))}
               {/* Drop Marker */}
               <div
-                style={{ left: `${(10.4 / (duration || 41.5)) * 100}%` }}
+                style={{ left: `${(10.4 / (duration || 34.0)) * 100}%` }}
                 className="absolute top-0 bottom-0 w-1 bg-amber-400 pointer-events-none"
                 title="Beat Drop"
               />
