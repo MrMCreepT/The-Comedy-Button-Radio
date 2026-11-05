@@ -1259,8 +1259,12 @@ async function start() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    const publicPath = path.join(process.cwd(), "public");
     if (fs.existsSync(distPath) && fs.existsSync(path.join(distPath, "index.html"))) {
       app.use(express.static(distPath));
+      if (fs.existsSync(publicPath)) {
+        app.use(express.static(publicPath));
+      }
       app.get("*", (req, res) => {
         res.sendFile(path.join(distPath, "index.html"));
       });
