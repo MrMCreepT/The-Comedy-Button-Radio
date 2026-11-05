@@ -10,20 +10,23 @@ import {
   Headphones,
   Heart,
   MessageSquare,
-  ChevronDown,
-  Compass,
+  Sparkles,
   BarChart3,
   Tv,
   HardDrive,
   Moon,
   Sun,
-  Sparkles
+  Search,
+  SlidersHorizontal,
+  Settings,
+  Palette
 } from 'lucide-react';
 import { ComedyButtonLogo } from './ComedyButtonLogo';
 import { PWAInstallButton } from './PWAInstallButton';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import { OFFICIAL_LINKS, PodcastLink } from '../data/links';
+import { triggerHaptic } from '../utils/haptics';
 
 interface NavbarProps {
   activeTab: 'stream' | 'archive';
@@ -60,11 +63,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   totalEpisodes,
 }) => {
   const { openStatsModal, openCastReceiver, openStorageModal } = useAudio();
-  const { isOled, toggleOled } = useTheme();
+  const { themeMode, setThemeMode, cycleTheme, isMaterialYou, isOled } = useTheme();
   const [linksOpen, setLinksOpen] = useState(false);
   const linksRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (linksRef.current && !linksRef.current.contains(event.target as Node)) {
@@ -80,140 +83,149 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [linksOpen]);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0e111a]/95 backdrop-blur-xl border-b border-zinc-800/80 text-zinc-100 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-18 gap-2 sm:gap-4">
-          {/* Logo & Brand Identity */}
+    <header className="sticky top-0 z-40 bg-[#0e1015]/95 backdrop-blur-xl border-b border-white/10 text-zinc-100 select-none">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left: Official Logo */}
           <div
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none shrink-0"
-            onClick={() => setActiveTab('stream')}
+            className="flex items-center cursor-pointer group shrink-0"
+            onClick={() => {
+              triggerHaptic(8);
+              setActiveTab('stream');
+            }}
           >
-            <ComedyButtonLogo size="sm" className="sm:hidden" />
-            <ComedyButtonLogo size="md" className="hidden sm:flex" />
+            <ComedyButtonLogo size="md" />
           </div>
 
-          {/* Clean Segmented Navigation (Radio & Episodes) - Desktop view */}
-          <nav className="hidden sm:flex items-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative shrink-0">
+          {/* Center: Clean Segmented Tab Switcher (No duplicate dropdowns) */}
+          <div className="flex items-center bg-zinc-900/90 border border-white/10 rounded-full p-1 shadow-inner">
             <button
-              onClick={() => setActiveTab('stream')}
-              className={`relative min-h-[40px] px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer z-10 ${
-                activeTab === 'stream' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setActiveTab('stream');
+              }}
+              className={`px-3 sm:px-4 py-1.5 rounded-full font-heading font-black text-xs uppercase tracking-tight transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'stream'
+                  ? 'bg-red-600 text-white shadow-md'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {activeTab === 'stream' && (
-                <motion.div
-                  layoutId="navbarActiveIndicator"
-                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
-                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                />
-              )}
-              <div className="relative z-10 flex items-center justify-center">
-                <Radio className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-300 animate-ping" />
-              </div>
-              <span className="relative z-10">24/7 Radio</span>
+              <span className={`w-2 h-2 rounded-full ${activeTab === 'stream' ? 'bg-white animate-pulse' : 'bg-red-500'}`} />
+              <span>Live Radio</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('archive')}
-              className={`relative min-h-[40px] px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer z-10 ${
-                activeTab === 'archive' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setActiveTab('archive');
+              }}
+              className={`px-3 sm:px-4 py-1.5 rounded-full font-heading font-black text-xs uppercase tracking-tight transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'archive'
+                  ? 'bg-zinc-800 text-white shadow-md border border-white/15'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {activeTab === 'archive' && (
-                <motion.div
-                  layoutId="navbarActiveIndicator"
-                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
-                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                />
-              )}
-              <Library className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">Episodes</span>
-              <span
-                className={`relative z-10 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full font-medium transition-colors ${
-                  activeTab === 'archive'
-                    ? 'bg-red-700/80 text-white'
-                    : 'bg-zinc-800 text-zinc-400'
-                }`}
-              >
+              <Library className="w-3.5 h-3.5" />
+              <span>Vault</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300">
                 {totalEpisodes || '560+'}
               </span>
             </button>
-          </nav>
+          </div>
 
-          {/* Right Action: T-Shirts, Links Dropdown, Stats, PWA, Shuffle */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Direct T-Shirts Store Link */}
-            <motion.a
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.95 }}
-              href="https://store.comedybutton.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold shadow-sm transition-colors"
-              title="Official Comedy Button T-Shirts & Merch"
+          {/* Right: Quick Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Direct Theme Switcher Pill */}
+            <button
+              type="button"
+              onClick={cycleTheme}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border ${
+                themeMode === 'material-you-light'
+                  ? 'bg-[#ffdad6] text-[#410002] border-[#b3261e]/30'
+                  : themeMode === 'material-you-dark'
+                  ? 'bg-[#ff8577]/20 text-[#ff8577] border-[#ff8577]/40'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300'
+              }`}
+              title="Click to cycle theme (Material You Dark, Material You Light, Studio Dark, OLED)"
+              aria-label="Cycle theme mode"
             >
-              <Shirt className="w-3.5 h-3.5 text-amber-400" />
-              <span>T-Shirts</span>
-              <ExternalLink className="w-2.5 h-2.5 text-amber-400/70" />
-            </motion.a>
+              <Palette className="w-3.5 h-3.5" />
+              <span className="font-mono text-[11px] font-black uppercase">
+                {themeMode === 'material-you-dark' ? 'M3 Dark' : themeMode === 'material-you-light' ? 'M3 Light' : themeMode === 'oled' ? 'OLED' : 'Studio'}
+              </span>
+            </button>
 
-            {/* Direct Theme Intro Button */}
-            {onOpenThemeIntro && (
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onOpenThemeIntro}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-gradient-to-r from-red-600/20 to-amber-500/20 hover:from-red-600/30 hover:to-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold shadow-sm transition-all cursor-pointer"
-                title="Watch The Comedy Button Theme Song & Opening Animation"
+            {/* Quick Search */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setActiveTab('archive');
+              }}
+              className="p-2 sm:px-3 sm:py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+              title="Search Archive"
+              aria-label="Search Archive"
+            >
+              <Search className="w-4 h-4" />
+              <span className="hidden md:inline text-xs font-bold">Search</span>
+            </button>
+
+            {/* Random Episode Shuffle Dice */}
+            {onPlayTrueRandom && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(12);
+                  onPlayTrueRandom();
+                }}
+                className="p-2 sm:px-3 sm:py-2 rounded-full bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 text-red-400 hover:text-red-300 transition-all cursor-pointer flex items-center gap-1.5"
+                title="Play True Random Episode"
+                aria-label="Play Random Episode"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span className="text-[11px] sm:text-xs">
-                  <span className="inline sm:hidden">Intro</span>
-                  <span className="hidden sm:inline">Theme Intro</span>
-                </span>
-              </motion.button>
+                <Shuffle className="w-4 h-4 stroke-[2.5]" />
+                <span className="hidden md:inline text-xs font-bold">Shuffle</span>
+              </button>
             )}
 
-            {/* Official Links Dropdown Menu */}
+            {/* Links & Player Tools Dropdown */}
             <div className="relative" ref={linksRef}>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setLinksOpen(!linksOpen)}
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl border text-xs font-semibold shadow-sm transition-colors cursor-pointer ${
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(8);
+                  setLinksOpen(!linksOpen);
+                }}
+                className={`p-2 rounded-full border transition-all cursor-pointer ${
                   linksOpen
-                    ? 'bg-zinc-800 border-zinc-600 text-white'
-                    : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 hover:text-white'
+                    ? 'bg-white text-zinc-950 border-white'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
                 }`}
-                title="Official Links, Store, Discord & Platforms"
+                title="Official Links & Settings"
+                aria-label="Official Links and Settings"
               >
-                <Compass className="w-3.5 h-3.5 text-red-400" />
-                <span className="hidden md:inline">Links</span>
-                <ChevronDown
-                  className={`w-3 h-3 text-zinc-400 transition-transform duration-200 ${
-                    linksOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </motion.button>
+                <Settings className="w-4 h-4" />
+              </button>
 
-              {/* Dropdown Card */}
+              {/* Dropdown Menu */}
               <AnimatePresence>
                 {linksOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-[#121520] border border-zinc-700/90 shadow-2xl p-2.5 z-50 space-y-1"
+                    className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-[#181a20] border border-white/15 shadow-2xl p-3 z-50 space-y-1.5"
                   >
-                    <div className="px-2.5 py-1.5 border-b border-zinc-800/80 flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                        Official Channels & Gear
+                    <div className="px-3 py-1.5 border-b border-white/10 flex items-center justify-between">
+                      <span className="font-heading font-black text-xs uppercase tracking-tight text-white">
+                        OFFICIAL COMMUNITY & LINKS
                       </span>
-                      <span className="text-[10px] text-zinc-500 font-medium">The Comedy Button</span>
+                      <span className="text-[10px] font-mono text-red-400 uppercase font-bold">THE BUTTON</span>
                     </div>
 
-                    <div className="space-y-1 pt-1">
+                    <div className="space-y-1 pt-1 max-h-60 overflow-y-auto">
                       {OFFICIAL_LINKS.map((link) => (
                         <a
                           key={link.id}
@@ -221,25 +233,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setLinksOpen(false)}
-                          className={`flex items-center gap-3 p-2 rounded-xl transition-all group ${
+                          className={`flex items-center gap-3 p-2.5 rounded-xl transition-all group ${
                             link.highlight
-                              ? 'bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30'
-                              : 'hover:bg-zinc-800/80 border border-transparent'
+                              ? 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-white'
+                              : 'hover:bg-white/5 border border-transparent text-zinc-200'
                           }`}
                         >
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-zinc-700/60"
-                            style={{ backgroundColor: `${link.accentColor}15` }}
-                          >
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border border-white/10 bg-black/40">
                             {renderDropdownIcon(link.iconName)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-zinc-200 group-hover:text-white truncate">
+                              <span className="text-xs font-bold text-white truncate">
                                 {link.name}
                               </span>
                               {link.badge && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-400 text-zinc-950 font-bold uppercase">
                                   {link.badge}
                                 </span>
                               )}
@@ -248,97 +257,144 @@ export const Navbar: React.FC<NavbarProps> = ({
                               {link.description}
                             </p>
                           </div>
-                          <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                          <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-200 shrink-0" />
                         </a>
                       ))}
+                    </div>
 
-                      {/* In-App Player Tools */}
-                      <div className="pt-1.5 border-t border-zinc-800/80 mt-1 flex flex-col gap-1">
-                        {onOpenThemeIntro && (
-                          <button
-                            onClick={() => {
-                              setLinksOpen(false);
-                              onOpenThemeIntro();
-                            }}
-                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full group"
-                          >
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-red-950/60 border border-red-800/60 text-red-400 group-hover:scale-105 transition-transform">
-                              <Sparkles className="w-4 h-4 text-amber-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-xs font-bold text-zinc-200 group-hover:text-red-400 block truncate transition-colors">
-                                Show Intro & Theme Tune
-                              </span>
-                              <span className="text-[10px] text-zinc-400 block truncate">
-                                Watch host roll call & rock out to the theme
-                              </span>
-                            </div>
-                          </button>
-                        )}
+                    {/* In-App Player Tools */}
+                    <div className="pt-2 border-t border-white/10 mt-1 flex flex-col gap-1">
+                      {onOpenThemeIntro && (
                         <button
+                          type="button"
                           onClick={() => {
                             setLinksOpen(false);
-                            openStatsModal();
+                            onOpenThemeIntro();
                           }}
-                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 text-left cursor-pointer transition-colors w-full"
                         >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-red-950/50 border border-red-800/60 text-red-400">
-                            <BarChart3 className="w-4 h-4" />
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-red-500/20 text-red-400">
+                            <Sparkles className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-bold text-zinc-200 block truncate">Listening Stats & Wrapped</span>
-                            <span className="text-[10px] text-zinc-400 block truncate">Total hours, era breakdown & streak</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setLinksOpen(false);
-                            openCastReceiver();
-                          }}
-                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
-                        >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-purple-950/50 border border-purple-800/60 text-purple-400">
-                            <Tv className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-bold text-zinc-200 block truncate">TV Receiver Display</span>
-                            <span className="text-[10px] text-zinc-400 block truncate">Full screen ambient artwork & vinyl</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setLinksOpen(false);
-                            openStorageModal();
-                          }}
-                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
-                        >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-emerald-950/50 border border-emerald-800/60 text-emerald-400">
-                            <HardDrive className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-bold text-zinc-200 block truncate">Downloads & Storage</span>
-                            <span className="text-[10px] text-zinc-400 block truncate">Offline audio cache & device headroom</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setLinksOpen(false);
-                            toggleOled();
-                          }}
-                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-zinc-800/80 text-left cursor-pointer transition-colors w-full"
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                            isOled ? 'bg-amber-950/50 border-amber-800/60 text-amber-400' : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-                          }`}>
-                            {isOled ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-bold text-zinc-200 block truncate">OLED Pure Black Mode</span>
+                            <span className="text-xs font-bold text-white block truncate">
+                              Show Intro & Theme Song
+                            </span>
                             <span className="text-[10px] text-zinc-400 block truncate">
-                              {isOled ? 'Enabled (#000000 true black)' : 'Disabled (Standard dark mode)'}
+                              Host roll call animation
                             </span>
                           </div>
                         </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLinksOpen(false);
+                          openStatsModal();
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 text-left cursor-pointer transition-colors w-full"
+                      >
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/20 text-blue-400">
+                          <BarChart3 className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white block truncate">Listening Stats</span>
+                          <span className="text-[10px] text-zinc-400 block truncate">Hours & era breakdown</span>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLinksOpen(false);
+                          openStorageModal();
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 text-left cursor-pointer transition-colors w-full"
+                      >
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400">
+                          <HardDrive className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white block truncate">Offline Storage</span>
+                          <span className="text-[10px] text-zinc-400 block truncate">Manage downloaded shows</span>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLinksOpen(false);
+                          openCastReceiver();
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 text-left cursor-pointer transition-colors w-full"
+                      >
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-purple-500/20 text-purple-400">
+                          <Tv className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white block truncate">TV Ambient Display</span>
+                          <span className="text-[10px] text-zinc-400 block truncate">Full screen theater receiver</span>
+                        </div>
+                      </button>
+
+                      {/* Theme Appearance Selector */}
+                      <div className="p-2 rounded-xl bg-black/30 border border-white/5 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300">
+                          <span className="flex items-center gap-1.5">
+                            <Palette className="w-3.5 h-3.5 text-red-400" />
+                            <span>Theme Appearance</span>
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-400 uppercase">
+                            {themeMode}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 bg-white/5 p-1 rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => setThemeMode('material-you-dark')}
+                            className={`py-1 px-1 rounded-md text-[10px] font-bold transition-all text-center cursor-pointer ${
+                              themeMode === 'material-you-dark'
+                                ? 'bg-[#ff8577] text-[#410003] font-black shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
+                            }`}
+                          >
+                            M3 Dark
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setThemeMode('material-you-light')}
+                            className={`py-1 px-1 rounded-md text-[10px] font-bold transition-all text-center cursor-pointer ${
+                              themeMode === 'material-you-light'
+                                ? 'bg-[#ffdad6] text-[#410002] font-black shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
+                            }`}
+                          >
+                            M3 Light
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setThemeMode('studio-dark')}
+                            className={`py-1 px-1 rounded-md text-[10px] font-bold transition-all text-center cursor-pointer ${
+                              themeMode === 'studio-dark'
+                                ? 'bg-zinc-700 text-white shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
+                            }`}
+                          >
+                            Studio
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setThemeMode('oled')}
+                            className={`py-1 px-1 rounded-md text-[10px] font-bold transition-all text-center cursor-pointer ${
+                              themeMode === 'oled'
+                                ? 'bg-black text-white border border-white/20 shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
+                            }`}
+                          >
+                            OLED
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -346,120 +402,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Offline Storage Manager Quick Action */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={openStorageModal}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-              title="Offline Audio Storage & Downloads"
-              aria-label="Offline Audio Storage and Downloads"
-            >
-              <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden xl:inline">Downloads</span>
-            </motion.button>
-
-            {/* Listening Stats & Highlights Quick Action */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={openStatsModal}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-[38px] sm:min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-              title="Your Listening Stats & Year-in-Review Highlights"
-              aria-label="Listening Stats and Year in Review"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-red-400" />
-              <span className="hidden lg:inline">Stats</span>
-            </motion.button>
-
-            {/* OLED Mode Quick Switcher */}
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={toggleOled}
-              className={`flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 min-w-[36px] min-h-[36px] rounded-xl border text-xs font-semibold shadow-sm transition-all cursor-pointer ${
-                isOled
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-amber-950/20'
-                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 hover:text-white'
-              }`}
-              title={isOled ? 'Switch to Standard Dark Mode' : 'Switch to OLED Pure Black Mode'}
-              aria-label={isOled ? 'Switch to Standard Dark Mode' : 'Switch to OLED Pure Black Mode'}
-              aria-pressed={isOled}
-            >
-              {isOled ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-400" />}
-            </motion.button>
-
-            {/* PWA In-App Install Button */}
+            {/* PWA Install Button */}
             <PWAInstallButton />
-
-            {/* Shuffle Button */}
-            {onPlayTrueRandom && (
-              <>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={onPlayTrueRandom}
-                  className="hidden sm:flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-                  title="Play a random episode from the entire 560+ catalog"
-                >
-                  <motion.div whileTap={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                    <Shuffle className="w-3.5 h-3.5 text-red-400" />
-                  </motion.div>
-                  <span>Random</span>
-                </motion.button>
-
-                <motion.button
-                  whileTap={{ scale: 0.85, rotate: 180 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  onClick={onPlayTrueRandom}
-                  className="sm:hidden flex items-center justify-center w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl bg-zinc-900 border border-zinc-700/80 text-red-400 active:text-white cursor-pointer shadow-sm"
-                  title="Play a random episode"
-                  aria-label="Play random episode"
-                >
-                  <Shuffle className="w-4 h-4" />
-                </motion.button>
-              </>
-            )}
           </div>
-        </div>
-
-        {/* Mobile Segmented Navigation (underneath top bar, 2 columns: Radio & Episodes) */}
-        <div className="sm:hidden pb-2.5 pt-0.5">
-          <nav className="grid grid-cols-2 p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/80 shadow-sm relative w-full">
-            <button
-              onClick={() => setActiveTab('stream')}
-              className={`relative min-h-[38px] py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer z-10 ${
-                activeTab === 'stream' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              {activeTab === 'stream' && (
-                <motion.div
-                  layoutId="navbarActiveIndicatorMobile"
-                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
-                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                />
-              )}
-              <div className="relative z-10 flex items-center justify-center">
-                <Radio className="w-3.5 h-3.5" />
-                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-red-300 animate-ping" />
-              </div>
-              <span className="relative z-10 text-xs">24/7 Radio</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('archive')}
-              className={`relative min-h-[38px] py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer z-10 ${
-                activeTab === 'archive' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              {activeTab === 'archive' && (
-                <motion.div
-                  layoutId="navbarActiveIndicatorMobile"
-                  className="absolute inset-0 bg-red-600 rounded-lg shadow-md shadow-red-950/60"
-                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                />
-              )}
-              <Library className="w-3.5 h-3.5 relative z-10" />
-              <span className="relative z-10 text-xs">Episodes ({totalEpisodes || '560+'})</span>
-            </button>
-          </nav>
         </div>
       </div>
     </header>

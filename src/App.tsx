@@ -27,9 +27,7 @@ const ListeningStatsModal = lazy(() =>
 const CastReceiverScreen = lazy(() =>
   import('./components/CastReceiverScreen').then((m) => ({ default: m.CastReceiverScreen }))
 );
-const StorageManagerModal = lazy(() =>
-  import('./components/StorageManagerModal').then((m) => ({ default: m.StorageManagerModal }))
-);
+import { StorageManagerModal } from './components/StorageManagerModal';
 import { ThemeIntroModal } from './components/ThemeIntroModal';
 
 function AppContent() {
@@ -38,6 +36,7 @@ function AppContent() {
     currentEpisode,
     setPlaylist,
     startLiveRadio,
+    openStatsModal,
     isStatsModalOpen,
     closeStatsModal,
     isCastReceiverOpen,
@@ -103,7 +102,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0e14] text-zinc-100 flex flex-col selection:bg-red-600 selection:text-white font-sans antialiased relative overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[var(--theme-canvas-bg,#181519)] text-[var(--theme-canvas-color,#e7e0e5)] flex flex-col selection:bg-[#ff8577] selection:text-[#410003] font-sans antialiased relative overflow-x-hidden w-full max-w-full transition-colors duration-300">
       {/* Top Brand Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -114,19 +113,19 @@ function AppContent() {
       />
 
       {/* Main Content View (24/7 Radio or Complete Episode Archive) */}
-      <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 ${
-        currentEpisode ? 'pb-24 sm:pb-28' : 'pb-8 sm:pb-12'
+      <main className={`flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 ${
+        currentEpisode ? 'pb-32 sm:pb-36' : 'pb-20 sm:pb-24'
       }`}>
         {error ? (
-          <div className="my-12 p-8 max-w-lg mx-auto rounded-3xl bg-[#121520] border border-zinc-800 text-center space-y-4 shadow-xl">
-            <div className="w-14 h-14 rounded-2xl bg-red-950/60 text-red-400 border border-red-800/40 flex items-center justify-center mx-auto shadow-md">
-              <AlertCircle className="w-7 h-7" />
+          <div className="my-12 p-8 max-w-lg mx-auto rounded-[32px] bg-[#181a20] border border-white/10 text-center space-y-4 shadow-2xl">
+            <div className="w-14 h-14 rounded-full bg-[#ff6355]/20 text-[#ff6355] flex items-center justify-center mx-auto shadow-md">
+              <AlertCircle className="w-7 h-7 stroke-[2.5]" />
             </div>
-            <h2 className="text-xl font-bold text-zinc-100">Broadcast Feed Disconnected</h2>
+            <h2 className="font-heading font-black text-xl text-white uppercase tracking-tight">Broadcast Feed Disconnected</h2>
             <p className="text-xs text-zinc-400 leading-relaxed">{error}</p>
             <button
               onClick={loadData}
-              className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 mx-auto transition-colors cursor-pointer shadow-md shadow-red-950/40"
+              className="px-5 py-2.5 bg-white text-zinc-950 font-heading font-black text-xs uppercase rounded-full flex items-center gap-2 mx-auto transition-colors cursor-pointer shadow-md hover:bg-zinc-100"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Retry Fetching Episodes</span>

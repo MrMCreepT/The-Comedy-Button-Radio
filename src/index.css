@@ -7,17 +7,24 @@
     width: 100%;
   }
   body {
-    background-color: #0c0e14;
-    color: #f3f4f6;
+    background-color: var(--theme-canvas-bg, #181519);
+    color: var(--theme-canvas-color, #e7e0e5);
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
+.font-heading {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  font-feature-settings: "ss01" on, "cv05" on;
+}
+
 .font-display {
-  font-family: 'Bungee', cursive, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: 'Space Grotesk', 'Bungee', cursive, sans-serif;
+  letter-spacing: -0.03em;
 }
 
 /* Custom sleek scrollbars */
@@ -26,104 +33,195 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c0e14;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #272f45;
+  background: rgba(150, 140, 150, 0.3);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3c4664;
+  background: rgba(150, 140, 150, 0.5);
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-/* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Subtle live equalizer wave */
-@keyframes eq-pulse-1 {
-  0%, 100% { height: 20%; }
-  50% { height: 85%; }
-}
-@keyframes eq-pulse-2 {
-  0%, 100% { height: 60%; }
-  50% { height: 25%; }
-}
-@keyframes eq-pulse-3 {
-  0%, 100% { height: 35%; }
-  50% { height: 100%; }
-}
-@keyframes eq-pulse-4 {
-  0%, 100% { height: 80%; }
-  50% { height: 40%; }
-}
+/* Equalizer animations */
+@keyframes eq-pulse-1 { 0%, 100% { height: 20%; } 50% { height: 85%; } }
+@keyframes eq-pulse-2 { 0%, 100% { height: 60%; } 50% { height: 25%; } }
+@keyframes eq-pulse-3 { 0%, 100% { height: 35%; } 50% { height: 100%; } }
+@keyframes eq-pulse-4 { 0%, 100% { height: 80%; } 50% { height: 40%; } }
 
 .eq-bar-1 { animation: eq-pulse-1 0.85s ease-in-out infinite; }
 .eq-bar-2 { animation: eq-pulse-2 0.75s ease-in-out infinite; }
 .eq-bar-3 { animation: eq-pulse-3 0.95s ease-in-out infinite; }
 .eq-bar-4 { animation: eq-pulse-4 0.65s ease-in-out infinite; }
 
-@keyframes button-ripple {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-}
-
-.animate-btn-ripple {
-  animation: button-ripple 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes shimmer-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
-
-.animate-shimmer {
-  animation: shimmer-slide 1.4s infinite;
-}
-
 /* ========================================================================= */
-/* OLED Pure Black Theme Mode (#000000 True Black for battery & contrast)    */
+/* 1. OLED Pure Black Theme (#000000 True Black for battery)                 */
 /* ========================================================================= */
 html.theme-oled,
-html.theme-oled body,
-html.theme-oled .bg-\[\#0c0e14\],
-html.theme-oled .bg-\[\#0e111a\]\/95,
-html.theme-oled .bg-\[\#121520\] {
+html.theme-oled body {
   background-color: #000000 !important;
+  color: #f3f4f6 !important;
 }
-
-html.theme-oled .bg-\[\#151926\],
-html.theme-oled .bg-zinc-900\/90,
-html.theme-oled .bg-zinc-900 {
-  background-color: #0c0c0c !important;
-}
-
-html.theme-oled .bg-zinc-800,
-html.theme-oled .bg-zinc-800\/90,
-html.theme-oled .bg-zinc-800\/80 {
-  background-color: #141414 !important;
-}
-
-html.theme-oled .border-zinc-800,
-html.theme-oled .border-zinc-800\/80,
-html.theme-oled .border-zinc-700\/80,
-html.theme-oled .border-zinc-700\/70 {
+html.theme-oled .bg-\[\#0e1015\],
+html.theme-oled .bg-\[\#0c0e14\],
+html.theme-oled .bg-\[\#181a20\],
+html.theme-oled [class*="from-\[\#1c1f28\]"] {
+  background: #000000 !important;
   border-color: #242424 !important;
 }
-
-html.theme-oled .bg-gradient-to-t.from-\[\#0c0e14\] {
-  --tw-gradient-from: #000000 !important;
+html.theme-oled .bg-black\/30 {
+  background-color: #0d0d0d !important;
+}
+html.theme-oled header {
+  background-color: rgba(0, 0, 0, 0.95) !important;
+  border-color: #222222 !important;
 }
 
+/* ========================================================================= */
+/* 2. MATERIAL YOU - DARK (Material 3 Dynamic Tonal Crimson)                */
+/* ========================================================================= */
+html.theme-material-you-dark,
+html.theme-material-you-dark body {
+  background-color: #181519 !important;
+  color: #e7e0e5 !important;
+}
+
+/* Header & Nav */
+html.theme-material-you-dark header,
+html.theme-material-you-dark .bg-\[\#0e1015\]\/95 {
+  background-color: rgba(28, 24, 30, 0.95) !important;
+  border-color: rgba(255, 218, 214, 0.08) !important;
+}
+
+/* M3 Surface Container (Cards & Stages) */
+html.theme-material-you-dark .bg-\[\#181a20\],
+html.theme-material-you-dark [class*="from-\[\#1c1f28\]"] {
+  background: #231f25 !important;
+  border-color: rgba(255, 218, 214, 0.08) !important;
+  box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* M3 Surface Container High (Sub-cards, queued shows, modals) */
+html.theme-material-you-dark .bg-black\/30,
+html.theme-material-you-dark .bg-zinc-900,
+html.theme-material-you-dark .bg-zinc-900\/90 {
+  background-color: #2d2830 !important;
+  border-color: rgba(255, 218, 214, 0.06) !important;
+}
+
+/* Primary Accents: Coral Crimson & Tonal Peach Containers */
+html.theme-material-you-dark .bg-red-600,
+html.theme-material-you-dark .bg-\[\#ff6355\] {
+  background-color: #ff8577 !important;
+  color: #410003 !important;
+}
+html.theme-material-you-dark .text-red-400,
+html.theme-material-you-dark .text-red-500 {
+  color: #ff8577 !important;
+}
+html.theme-material-you-dark .bg-red-500\/20 {
+  background-color: rgba(255, 133, 119, 0.18) !important;
+}
+
+/* ========================================================================= */
+/* 3. MATERIAL YOU - LIGHT (Classic Google Pixel M3 Pastel Scheme)           */
+/* ========================================================================= */
+html.theme-material-you-light,
+html.theme-material-you-light body {
+  background-color: #fcf6f5 !important;
+  color: #1e1a1b !important;
+}
+
+/* Invert all dark text utilities */
+html.theme-material-you-light .text-white,
+html.theme-material-you-light .text-zinc-100,
+html.theme-material-you-light .text-zinc-200 {
+  color: #1e1a1b !important;
+}
+html.theme-material-you-light .text-zinc-300 {
+  color: #3b3536 !important;
+}
+html.theme-material-you-light .text-zinc-400,
+html.theme-material-you-light .text-zinc-500 {
+  color: #635b5d !important;
+}
+
+/* Header & Nav */
+html.theme-material-you-light header,
+html.theme-material-you-light .bg-\[\#0e1015\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(140, 116, 114, 0.15) !important;
+  box-shadow: 0 2px 12px rgba(100, 50, 40, 0.04) !important;
+}
+
+/* M3 Surface Container (Pure Crisp Porcelain Cards with Soft Drop Shadow) */
+html.theme-material-you-light .bg-\[\#181a20\],
+html.theme-material-you-light [class*="from-\[\#1c1f28\]"] {
+  background: #ffffff !important;
+  border-color: rgba(140, 116, 114, 0.12) !important;
+  box-shadow: 0 8px 30px -4px rgba(100, 50, 40, 0.08) !important;
+}
+
+/* M3 Sub-cards & List Items */
+html.theme-material-you-light .bg-black\/30,
+html.theme-material-you-light .bg-zinc-900,
+html.theme-material-you-light .bg-zinc-900\/90,
+html.theme-material-you-light .bg-black {
+  background-color: #f7f0ef !important;
+  border-color: rgba(140, 116, 114, 0.1) !important;
+}
+
+/* Sub-card active hover */
+html.theme-material-you-light .hover\:border-white\/15:hover {
+  border-color: rgba(179, 38, 30, 0.3) !important;
+}
+
+/* Tonal Buttons & Chips */
+html.theme-material-you-light .bg-white\/10,
+html.theme-material-you-light .bg-white\/5 {
+  background-color: #ede3e2 !important;
+  color: #1e1a1b !important;
+}
+html.theme-material-you-light .bg-white\/10:hover,
+html.theme-material-you-light .bg-white\/15 {
+  background-color: #e4d8d7 !important;
+}
+
+/* Primary M3 Action Buttons */
+html.theme-material-you-light .bg-red-600,
+html.theme-material-you-light .bg-\[\#ff6355\] {
+  background-color: #b3261e !important;
+  color: #ffffff !important;
+}
+html.theme-material-you-light .text-red-400,
+html.theme-material-you-light .text-red-500 {
+  color: #b3261e !important;
+}
+html.theme-material-you-light .bg-red-500\/20 {
+  background-color: #ffdad6 !important;
+  color: #410002 !important;
+  border-color: rgba(179, 38, 30, 0.2) !important;
+}
+
+/* Audio Player Dock */
+html.theme-material-you-light .bg-\[\#121520\],
+html.theme-material-you-light .bg-zinc-950\/95 {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(140, 116, 114, 0.18) !important;
+  box-shadow: 0 -8px 32px rgba(100, 50, 40, 0.1) !important;
+}
+
+/* Footer */
+html.theme-material-you-light footer,
+html.theme-material-you-light .bg-\[\#0e1015\] {
+  background-color: #f7f0ef !important;
+  border-color: rgba(140, 116, 114, 0.15) !important;
+}

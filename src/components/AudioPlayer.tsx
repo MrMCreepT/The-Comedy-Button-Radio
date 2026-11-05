@@ -545,13 +545,13 @@ export const AudioPlayer: React.FC<{ onOpenEpisode?: (episode: any) => void }> =
       {/* ========================================================================= */}
       <aside
         aria-label="Audio playback bar"
-        className="fixed bottom-0 left-0 right-0 z-40 bg-[#0e111a]/95 backdrop-blur-xl border-t border-zinc-800 text-zinc-100 shadow-2xl transition-all duration-200"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-[#14161c]/95 backdrop-blur-xl border-t border-white/10 text-zinc-100 shadow-2xl transition-all duration-200 select-none"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {/* Top micro progress accent line */}
-        <div className="relative w-full h-1 bg-zinc-800/80">
+        <div className="relative w-full h-1 bg-white/10">
           <div
-            className="absolute top-0 left-0 bottom-0 bg-red-600 transition-all"
+            className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-[#ff6355] to-[#f4be47] transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
